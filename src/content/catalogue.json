@@ -1,0 +1,8 @@
+[
+  {"id":"5-docs","name":"5-Docs","category":"GED & SAE","summary":"Gestion, stockage et recherche documentaire ; cycle de vie, métadonnées, droits d’accès et traçabilité. Intégration à votre système d’information selon son environnement."},
+  {"id":"5-gestion","name":"5-Gestion","category":"ERP modulaire","summary":"CRM et ventes, RH, CMS/site et point de vente, marketing, productivité, finance et facturation, produits et stocks. Modules et intégrations adaptés aux TPE, PME, associations et grands groupes, selon les besoins et l’environnement de déploiement."},
+  {"id":"5-secu","name":"5-Secu","category":"Sûreté physique","summary":"Contrôle d’accès, détection d’intrusion et vidéosurveillance pour protéger les locaux et organiser les accès physiques."},
+  {"id":"5-cyber","name":"5-Cyber","category":"Cybersécurité","summary":"Diagnostic de sécurité, intervention après incident et amélioration des protections du système d’information."},
+  {"id":"5-com","name":"5-Com","category":"Communication","summary":"Téléphonie IP, serveur vocal interactif et services Push & Pull SMS pour vos échanges et vos parcours de communication."},
+  {"id":"5-sign","name":"5-Sign","category":"Organisation & affichage","summary":"Gestion des files d’attente, du temps de travail et de la publicité digitale."}
+]

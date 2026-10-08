@@ -1,0 +1,16 @@
+import { pageMetadata } from "@/lib/page-meta";
+import Content from "@/content/maintenance-support";
+import { pageContent } from "@/lib/content";
+export const revalidate = 300;
+export async function generateMetadata() {
+  const p = await pageContent("maintenance-support");
+  return pageMetadata("/maintenance-support", p);
+}
+export default async function Page() {
+  const p = await pageContent("maintenance-support");
+  return (
+    <Content
+      texts={Object.fromEntries((p.texts || []).map((x) => [x.key, x.value]))}
+    />
+  );
+}

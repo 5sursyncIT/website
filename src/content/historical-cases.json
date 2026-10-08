@@ -1,0 +1,86 @@
+[
+  {
+    "anchor": "afribone-guinee",
+    "client": "Afribone Guinée",
+    "category": "Infrastructure · 2023",
+    "project": "Modernisation du datacenter",
+    "summary": "À Conakry en 2023 : serveurs et NAS, câblage, virtualisation VMware et solutions de sécurité Palo Alto, Wallix et Fortinet. Une référence technique publiée sur le site de l’entreprise.",
+    "tags": [
+      "Conakry",
+      "Datacenter",
+      "Virtualisation"
+    ],
+    "order": 2,
+    "published": true
+  },
+  {
+    "anchor": "lpg-expo",
+    "client": "LPG Expo",
+    "category": "Événementiel · juillet 2024",
+    "project": "Connectivité temporaire",
+    "summary": "Interconnexion temporaire, couverture Wi-Fi et gestion technique sur site pour l’événement LPG Expo en juillet 2024.",
+    "tags": [
+      "Wi-Fi",
+      "Interconnexion",
+      "Assistance sur site"
+    ],
+    "order": 3,
+    "published": true
+  },
+  {
+    "anchor": "interconnexions-sites",
+    "client": "Sofnor-tech · Sigma BTP · Kamex Clean",
+    "category": "Interconnexion · 2022–2024",
+    "project": "Relier les sites et les équipes",
+    "summary": "Références d’interconnexion PTP/PTMP et VPN publiées pour la période 2022–2024 : Dakar, Thiès, Ndangane, Gambie et Conakry. Les clients cités couvrent cet ensemble de missions.",
+    "tags": [
+      "PTP / PTMP",
+      "VPN",
+      "Multi-sites"
+    ],
+    "order": 4,
+    "published": true
+  },
+  {
+    "anchor": "ina-archives-institutionnel",
+    "client": "INA Guinée",
+    "category": "Archives & infrastructure",
+    "project": "Archives, SAE et site institutionnel",
+    "summary": "À Conakry, sur la période 2022–2024 : valorisation du patrimoine par un site institutionnel, archives et SAE, et mini-datacenter VMware. Ces références historiques complètent la mission actuelle de transformation numérique, GED et ERP présentée ci-dessus.",
+    "tags": [
+      "Conakry",
+      "Archives",
+      "SAE",
+      "VMware"
+    ],
+    "order": 5,
+    "published": true
+  },
+  {
+    "anchor": "mismo-equip",
+    "client": "Mismo Equip",
+    "category": "Web · référence historique",
+    "project": "Site vitrine d’équipements de sécurité",
+    "summary": "Site vitrine pour une activité de fourniture et d’installation d’équipements de sécurité. Référence publiée sur l’ancien site de 5/Sync IT.",
+    "tags": [
+      "Site vitrine",
+      "Équipements de sécurité"
+    ],
+    "order": 6,
+    "published": true
+  },
+  {
+    "anchor": "mairie-dakar-contexte",
+    "client": "Mairie de Dakar",
+    "category": "Réseau · référence 2022",
+    "project": "Haut débit, ToIP et cloud interne",
+    "summary": "La référence publiée pour 2022 décrit un réseau haut débit, la téléphonie IP et un cloud interne. Ce contexte complète la mission réseau, fibre, ToIP, portail et support dont le statut actuel figure dans les cartes ci-dessus.",
+    "tags": [
+      "Dakar",
+      "ToIP",
+      "Cloud interne"
+    ],
+    "order": 7,
+    "published": true
+  }
+]

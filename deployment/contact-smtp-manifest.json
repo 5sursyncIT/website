@@ -1,0 +1,67 @@
+[
+  {
+    "path": "src/instrumentation.ts",
+    "sha256": "dac8f06be030e32476d8696143c56a16b7598a4142dce4a6ab7c0b096f2b7147",
+    "previous_sha256": null
+  },
+  {
+    "path": "src/components/ContactForm.tsx",
+    "sha256": "78573b6792d80f3cc16d13578162a28659fc85ae5566f79a15c2054506636350",
+    "previous_sha256": "3e0ceae0aafc0509659ac2ab283363e896844af4aa49469de05c736d84ecfccb"
+  },
+  {
+    "path": "src/collections/index.ts",
+    "sha256": "a08858a758dc81df89ad0701f4cf117860b5b03e85d1b34e9e8a5556847e6299",
+    "previous_sha256": "c8faa20a1dac101ab49d4c4d92f936d75b1b157978d61463b499e17b1d709141"
+  },
+  {
+    "path": "src/lib/contact-delivery.ts",
+    "sha256": "c2ccbe8a3b153a238adec98c881af5b7e2f95cdcca80d5549bfc6359c92a682e",
+    "previous_sha256": null
+  },
+  {
+    "path": "src/lib/contact-worker.ts",
+    "sha256": "425cdd540cb8d24128c9ff289dc54be468bca1d5a162295db0e27c0708224721",
+    "previous_sha256": null
+  },
+  {
+    "path": "src/lib/contact-smtp.ts",
+    "sha256": "a4ba5ec8fc606767725cf440dd8a03654330f5387adee253068802c942d1fdc6",
+    "previous_sha256": null
+  },
+  {
+    "path": "src/migrations/index.ts",
+    "sha256": "f277d3fdb6764b7b57177abd759ada2882976a93de02adc85e2c37e1e582e887",
+    "previous_sha256": "d280d5bb29dbd2818da1fb73ed367b000a7a411b6a2b4d1523796ddecc07ae41"
+  },
+  {
+    "path": "src/migrations/20261006_223000_contact_notifications.ts",
+    "sha256": "c1a6dafab037a04fd4d2cc8616db345f4c04c11f99658036b5ff45e9aa992c6f",
+    "previous_sha256": null
+  },
+  {
+    "path": "src/app/(site)/api/contact/route.ts",
+    "sha256": "19781f37c5f04df2a3ef1d0a968967cebdd9a11b244c2e40d563211e9ae247b2",
+    "previous_sha256": "b2c4d412d56870f692e2fc909229147765535baed99787c57d1cf2d30ea4d6cc"
+  },
+  {
+    "path": "tests/contact-delivery.test.ts",
+    "sha256": "36a7bea831031ee2a9442fc4667ceb0cafec6feb66b1848771281baddb545efc",
+    "previous_sha256": null
+  },
+  {
+    "path": "scripts/test-contact-smtp.ts",
+    "sha256": "f45d0aaef53d404bc06badd7ea69c8838f815b9cfb63021d6361741c573f426d",
+    "previous_sha256": null
+  },
+  {
+    "path": "package.json",
+    "sha256": "7244d36e7326dd585c28913efdc3203ed106c8592f7f4dcf0e81a4a6a8b14e0e",
+    "previous_sha256": "a22a1e6ac4ca81aefde27753344c1983699aa7eddc53f0461133974d6d773822"
+  },
+  {
+    "path": "package-lock.json",
+    "sha256": "31b66925a4d64384d12f387cf702c8143e7d59dc52300835b299aa1edca5fc63",
+    "previous_sha256": "783d0f4cabb4d05ded70c17fded0dbceb3971c6421ea9809b9e395d66791f202"
+  }
+]

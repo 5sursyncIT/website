@@ -1,0 +1,9 @@
+Existing /etc/nginx/conf.d/stream-direction.conf.stream is preserved.
+Add exactly one entry inside map $ssl_preread_server_name $ina_direction_backend:
+    preprod.5sursync.com syncit_preprod;
+Add one upstream inside existing stream block:
+    upstream syncit_preprod { server 127.0.0.1:9443; }
+Keep existing INA routes, reject default, port443 and proxy_protocol on.
+Install preprod.nginx.conf in HTTP sites-enabled only after certificate exists.
+Back up both config files, nginx -t, reload (no stop/restart), check all four SNI.
+Rollback only additions and restore saved config after nginx -t; keep INA services.

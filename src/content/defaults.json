@@ -1,0 +1,1448 @@
+[
+  {
+    "slug": "a-propos",
+    "title": "À propos de 5/Sync IT | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "À propos de 5/Sync IT"
+      },
+      {
+        "key": "text-1",
+        "value": "La technique au service"
+      },
+      {
+        "key": "text-2",
+        "value": " de votre activité."
+      },
+      {
+        "key": "text-3",
+        "value": "À Dakar, 5/Sync IT accompagne les entreprises"
+      },
+      {
+        "key": "text-4",
+        "value": " dans leurs projets informatiques."
+      },
+      {
+        "key": "text-5",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-6",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-7",
+        "value": "Un partenaire pour"
+      },
+      {
+        "key": "text-8",
+        "value": " vos enjeux informatiques."
+      },
+      {
+        "key": "text-9",
+        "value": "Conseil IT, réseaux, cloud, solutions métier et développement : nous intégrons les systèmes et pilotons les projets, de la planification à la mise en service."
+      },
+      {
+        "key": "text-10",
+        "value": "Notre priorité : accompagner les PME et les entreprises privées dans l’organisation et l’évolution de leur informatique."
+      },
+      {
+        "key": "text-11",
+        "value": "Une expérience également nourrie par des projets institutionnels et la transmission des compétences en réseau, virtualisation, cloud et sécurité."
+      },
+      {
+        "key": "text-12",
+        "value": "Notre manière de travailler."
+      },
+      {
+        "key": "text-13",
+        "value": "Comprendre votre activité"
+      },
+      {
+        "key": "text-14",
+        "value": "Partir de vos besoins et de vos contraintes."
+      },
+      {
+        "key": "text-15",
+        "value": "Choisir avec pragmatisme"
+      },
+      {
+        "key": "text-16",
+        "value": "Privilégier des solutions utiles et cohérentes."
+      },
+      {
+        "key": "text-17",
+        "value": "Construire dans la durée"
+      },
+      {
+        "key": "text-18",
+        "value": "Préparer la prise en main et les évolutions."
+      },
+      {
+        "key": "text-19",
+        "value": "Nos expertises"
+      },
+      {
+        "key": "text-20",
+        "value": "Quatre expertises complémentaires."
+      },
+      {
+        "key": "text-21",
+        "value": "Réseaux & cloud"
+      },
+      {
+        "key": "text-22",
+        "value": "Solutions métier"
+      },
+      {
+        "key": "text-23",
+        "value": "Développement & API"
+      },
+      {
+        "key": "text-24",
+        "value": "Maintenance et support"
+      },
+      {
+        "key": "text-25",
+        "value": "Faisons avancer"
+      },
+      {
+        "key": "text-26",
+        "value": " votre prochain projet."
+      },
+      {
+        "key": "text-27",
+        "value": "Parlons de votre besoin "
+      }
+    ]
+  },
+  {
+    "slug": "contact",
+    "title": "Parlons de votre besoin | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Contact"
+      },
+      {
+        "key": "text-1",
+        "value": "Parlons de votre besoin."
+      },
+      {
+        "key": "text-2",
+        "value": "Un projet, une question ou un besoin d’accompagnement ?"
+      },
+      {
+        "key": "text-3",
+        "value": " Présentez-nous votre contexte."
+      },
+      {
+        "key": "text-4",
+        "value": "Échangeons sur"
+      },
+      {
+        "key": "text-5",
+        "value": " votre projet."
+      },
+      {
+        "key": "text-6",
+        "value": "Réseaux, solutions métier, développement ou support : décrivez votre besoin en quelques mots."
+      },
+      {
+        "key": "text-7",
+        "value": "Écrivez-nous"
+      },
+      {
+        "key": "text-8",
+        "value": "contact@5sursync.com"
+      },
+      {
+        "key": "text-9",
+        "value": "Almadie 2, Résidence El'hadji Oumar Dieng, 4ème A, Sénégal"
+      },
+      {
+        "key": "text-10",
+        "value": "Nos expertises"
+      },
+      {
+        "key": "text-11",
+        "value": "Réseaux & cloud "
+      },
+      {
+        "key": "text-12",
+        "value": "Solutions métier "
+      },
+      {
+        "key": "text-13",
+        "value": "Développement & API "
+      },
+      {
+        "key": "text-14",
+        "value": "Maintenance et support "
+      },
+      {
+        "key": "text-15",
+        "value": "Votre message"
+      },
+      {
+        "key": "text-16",
+        "value": "Pour bien préparer notre échange"
+      },
+      {
+        "key": "text-17",
+        "value": "Pour bien préparer notre échange."
+      },
+      {
+        "key": "text-18",
+        "value": "Votre contexte"
+      },
+      {
+        "key": "text-19",
+        "value": "Votre activité et votre environnement."
+      },
+      {
+        "key": "text-20",
+        "value": "Votre besoin"
+      },
+      {
+        "key": "text-21",
+        "value": "L’objectif ou la difficulté à résoudre."
+      },
+      {
+        "key": "text-22",
+        "value": "Vos contraintes"
+      },
+      {
+        "key": "text-23",
+        "value": "Les priorités et le calendrier envisagé."
+      },
+      {
+        "key": "phone-label",
+        "value": "Appelez-nous"
+      },
+      {
+        "key": "phone",
+        "value": "+221 77 097 29 08"
+      },
+      {
+        "key": "phone-landline",
+        "value": "+221 33 805 79 09"
+      },
+      {
+        "key": "phone-mobile",
+        "value": "+221 76 881 30 39"
+      },
+      {
+        "key": "map-label",
+        "value": "Nous trouver"
+      },
+      {
+        "key": "map-title",
+        "value": "Notre adresse."
+      },
+      {
+        "key": "map-directions",
+        "value": "Ouvrir l’itinéraire"
+      },
+      {
+        "key": "map-note",
+        "value": "La carte recherche l’adresse indiquée. Confirmez la résidence avec nous avant votre déplacement."
+      },
+      {
+        "key": "map-search",
+        "value": "Rechercher cette adresse dans Google Maps"
+      }
+    ]
+  },
+  {
+    "slug": "developpement-api",
+    "title": "Développement & API | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "API"
+      },
+      {
+        "key": "text-1",
+        "value": "Données"
+      },
+      {
+        "key": "text-2",
+        "value": "CRM"
+      },
+      {
+        "key": "text-3",
+        "value": "Services"
+      },
+      {
+        "key": "text-4",
+        "value": "Développement & API"
+      },
+      {
+        "key": "text-5",
+        "value": "Créez les outils."
+      },
+      {
+        "key": "text-6",
+        "value": " Connectez les usages."
+      },
+      {
+        "key": "text-7",
+        "value": "Applications web et mobiles, sites et intégrations :"
+      },
+      {
+        "key": "text-8",
+        "value": " des solutions conçues autour de votre activité."
+      },
+      {
+        "key": "text-9",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-10",
+        "value": "Schéma d’illustration"
+      },
+      {
+        "key": "text-11",
+        "value": "01 / Périmètre"
+      },
+      {
+        "key": "text-12",
+        "value": "Du besoin à une solution utile."
+      },
+      {
+        "key": "text-13",
+        "value": "Applications sur mesure"
+      },
+      {
+        "key": "text-14",
+        "value": "Applications web et mobiles sur mesure, portails et outils de gestion conçus autour des usages des équipes."
+      },
+      {
+        "key": "text-15",
+        "value": "Intégrations & API"
+      },
+      {
+        "key": "text-16",
+        "value": "Intégrations au système d’information et API : faire circuler les données selon les droits d’accès et les possibilités de chaque logiciel."
+      },
+      {
+        "key": "text-17",
+        "value": "Sites web"
+      },
+      {
+        "key": "text-18",
+        "value": "Sites vitrines et institutionnels pour présenter votre activité et orienter les visiteurs."
+      },
+      {
+        "key": "text-19",
+        "value": "02 / Méthode"
+      },
+      {
+        "key": "text-20",
+        "value": "Un projet lisible à chaque étape."
+      },
+      {
+        "key": "text-21",
+        "value": "Fonctions, dépendances, tests"
+      },
+      {
+        "key": "text-22",
+        "value": " et conditions de livraison sont"
+      },
+      {
+        "key": "text-23",
+        "value": " définis ensemble."
+      },
+      {
+        "key": "text-24",
+        "value": "Cadrer les usages"
+      },
+      {
+        "key": "text-25",
+        "value": "Concevoir les parcours"
+      },
+      {
+        "key": "text-26",
+        "value": "Développer et tester"
+      },
+      {
+        "key": "text-27",
+        "value": "Livrer et documenter"
+      },
+      {
+        "key": "text-28",
+        "value": "Penser aussi à la suite."
+      },
+      {
+        "key": "text-29",
+        "value": "Maintenance, mises à jour et évolutions, avec documentation et accès d’administration précisés dès le cadrage."
+      },
+      {
+        "key": "text-30",
+        "value": "03 / Questions fréquentes"
+      },
+      {
+        "key": "text-31",
+        "value": "Avant d’écrire la première ligne."
+      },
+      {
+        "key": "text-32",
+        "value": "Faut-il déjà un cahier des charges ?"
+      },
+      {
+        "key": "text-33",
+        "value": "Non. Décrivez d’abord ce que vos équipes veulent pouvoir faire."
+      },
+      {
+        "key": "text-34",
+        "value": "Tous les logiciels peuvent-ils se connecter ?"
+      },
+      {
+        "key": "text-35",
+        "value": "Cela dépend des API, des droits d’accès et des limites de chaque système."
+      },
+      {
+        "key": "text-36",
+        "value": "Une idée, un outil à faire évoluer ?"
+      },
+      {
+        "key": "text-37",
+        "value": "Parlons de vos utilisateurs et de vos besoins."
+      },
+      {
+        "key": "text-38",
+        "value": "Parlons de votre besoin "
+      }
+    ]
+  },
+  {
+    "slug": "home",
+    "title": "Des solutions informatiques pour votre entreprise | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Informatique pour les entreprises • Dakar"
+      },
+      {
+        "key": "text-1",
+        "value": "Des solutions informatiques"
+      },
+      {
+        "key": "text-2",
+        "value": " pour faire avancer"
+      },
+      {
+        "key": "text-3",
+        "value": " votre entreprise"
+      },
+      {
+        "key": "text-4",
+        "value": "Réseaux, outils métier et développement."
+      },
+      {
+        "key": "text-5",
+        "value": " Une expertise technique au service de votre activité."
+      },
+      {
+        "key": "text-6",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-7",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-8",
+        "value": "01 / Expertises"
+      },
+      {
+        "key": "text-9",
+        "value": "Une expertise, quatre leviers."
+      },
+      {
+        "key": "text-10",
+        "value": "Réseaux & cloud"
+      },
+      {
+        "key": "text-11",
+        "value": "Connecter et structurer votre environnement."
+      },
+      {
+        "key": "text-12",
+        "value": "Solutions métier"
+      },
+      {
+        "key": "text-13",
+        "value": "Des outils adaptés à vos processus."
+      },
+      {
+        "key": "text-14",
+        "value": "Développement & API"
+      },
+      {
+        "key": "text-15",
+        "value": "Créer et connecter vos applications."
+      },
+      {
+        "key": "text-16",
+        "value": "Maintenance et support"
+      },
+      {
+        "key": "text-17",
+        "value": "Accompagner votre informatique au quotidien."
+      },
+      {
+        "key": "text-18",
+        "value": "02 / Réalisations"
+      },
+      {
+        "key": "text-19",
+        "value": "Du besoin à la solution."
+      },
+      {
+        "key": "text-20",
+        "value": "Infrastructure"
+      },
+      {
+        "key": "text-21",
+        "value": "Groupe Hage"
+      },
+      {
+        "key": "text-22",
+        "value": "Réseau Wi-Fi"
+      },
+      {
+        "key": "text-23",
+        "value": "Web"
+      },
+      {
+        "key": "text-24",
+        "value": "Harmattan Sénégal"
+      },
+      {
+        "key": "text-25",
+        "value": "Site vitrine"
+      },
+      {
+        "key": "text-26",
+        "value": "03 / Contact"
+      },
+      {
+        "key": "text-27",
+        "value": "Votre prochain projet"
+      },
+      {
+        "key": "text-28",
+        "value": " commence ici."
+      },
+      {
+        "key": "text-29",
+        "value": "Prendre contact "
+      },
+      {
+        "key": "africa-title",
+        "value": "Nos interventions en Afrique"
+      },
+      {
+        "key": "africa-intro",
+        "value": "Des interventions au-delà des frontières. Explorez les pays où 5/Sync IT est intervenu."
+      },
+      {
+        "key": "africa-legend",
+        "value": "Pays d’intervention"
+      },
+      {
+        "key": "africa-instruction",
+        "value": "Choisissez un pays sur la carte ou dans la liste."
+      },
+      {
+        "key": "africa-detail-label",
+        "value": "Pays d’intervention"
+      },
+      {
+        "key": "africa-mission-SEN",
+        "value": ""
+      },
+      {
+        "key": "africa-mission-CIV",
+        "value": ""
+      },
+      {
+        "key": "africa-mission-GIN",
+        "value": ""
+      },
+      {
+        "key": "africa-mission-GNB",
+        "value": ""
+      },
+      {
+        "key": "africa-mission-COD",
+        "value": ""
+      },
+      {
+        "key": "africa-mission-COG",
+        "value": ""
+      }
+    ]
+  },
+  {
+    "slug": "maintenance-support",
+    "title": "Maintenance et support | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Services"
+      },
+      {
+        "key": "text-1",
+        "value": "Maintenance et support"
+      },
+      {
+        "key": "text-2",
+        "value": "Un suivi clair pour"
+      },
+      {
+        "key": "text-3",
+        "value": " votre informatique."
+      },
+      {
+        "key": "text-4",
+        "value": "Accompagner vos utilisateurs, traiter les incidents et"
+      },
+      {
+        "key": "text-5",
+        "value": " organiser les prochaines actions de maintenance."
+      },
+      {
+        "key": "text-6",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-7",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-8",
+        "value": "01 / Périmètre"
+      },
+      {
+        "key": "text-9",
+        "value": "Des besoins courants, un cadre défini."
+      },
+      {
+        "key": "text-10",
+        "value": "Assistance utilisateurs"
+      },
+      {
+        "key": "text-11",
+        "value": "Assistance à distance ou sur site et accompagnement des utilisateurs sur les postes et logiciels concernés."
+      },
+      {
+        "key": "text-12",
+        "value": "Diagnostic & incidents"
+      },
+      {
+        "key": "text-13",
+        "value": "Maintenance corrective et diagnostic : identifier les causes et traiter les incidents sur les équipements couverts."
+      },
+      {
+        "key": "text-14",
+        "value": "Maintenance préventive"
+      },
+      {
+        "key": "text-15",
+        "value": "Maintenance préventive, audits et vérifications planifiées selon les besoins du parc."
+      },
+      {
+        "key": "text-16",
+        "value": "Conseil & évolutions"
+      },
+      {
+        "key": "text-17",
+        "value": "Conseil, mises à jour, évolutions et sensibilisation des utilisateurs."
+      },
+      {
+        "key": "text-18",
+        "value": "02 / Méthode"
+      },
+      {
+        "key": "text-19",
+        "value": "Passer du dépannage au suivi."
+      },
+      {
+        "key": "text-20",
+        "value": "Faire le point"
+      },
+      {
+        "key": "text-21",
+        "value": "Parc et usages"
+      },
+      {
+        "key": "text-22",
+        "value": "Prioriser"
+      },
+      {
+        "key": "text-23",
+        "value": "Actions à engager"
+      },
+      {
+        "key": "text-24",
+        "value": "Intervenir"
+      },
+      {
+        "key": "text-25",
+        "value": "Périmètre convenu"
+      },
+      {
+        "key": "text-26",
+        "value": "Suivre"
+      },
+      {
+        "key": "text-27",
+        "value": "Incidents et évolutions"
+      },
+      {
+        "key": "text-28",
+        "value": "En appui de votre équipe."
+      },
+      {
+        "key": "text-29",
+        "value": "Avec ou sans équipe informatique interne, le périmètre, les responsabilités, les horaires et les modalités d’intervention sont définis selon le contrat."
+      },
+      {
+        "key": "text-30",
+        "value": "03 / Questions fréquentes"
+      },
+      {
+        "key": "text-31",
+        "value": "Le bon accompagnement pour vous."
+      },
+      {
+        "key": "text-32",
+        "value": "Ponctuel ou régulier ?"
+      },
+      {
+        "key": "text-33",
+        "value": "Une intervention ciblée ou un suivi dans la durée, selon votre besoin."
+      },
+      {
+        "key": "text-34",
+        "value": "Que préparer pour le premier échange ?"
+      },
+      {
+        "key": "text-35",
+        "value": "Le nombre d’utilisateurs, vos équipements et les incidents récurrents."
+      },
+      {
+        "key": "text-36",
+        "value": "Commençons par votre situation."
+      },
+      {
+        "key": "text-37",
+        "value": "Un problème récurrent, un parc à suivre ou une évolution à préparer ?"
+      },
+      {
+        "key": "text-38",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "support-access-label",
+        "value": "Déjà client ?"
+      },
+      {
+        "key": "support-access-link",
+        "value": "Accéder à votre espace Support"
+      }
+    ]
+  },
+  {
+    "slug": "realisations",
+    "title": "Nos réalisations | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Nos réalisations"
+      },
+      {
+        "key": "text-1",
+        "value": "Du besoin à la solution."
+      },
+      {
+        "key": "text-2",
+        "value": "Des projets d’infrastructure et de développement"
+      },
+      {
+        "key": "text-3",
+        "value": " au service de l’activité."
+      },
+      {
+        "key": "text-4",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-19",
+        "value": "Chaque projet"
+      },
+      {
+        "key": "text-20",
+        "value": " commence par vos usages."
+      },
+      {
+        "key": "text-21",
+        "value": "Comprendre le contexte, choisir les bons outils et construire une réponse adaptée."
+      },
+      {
+        "key": "text-22",
+        "value": "Écoute"
+      },
+      {
+        "key": "text-23",
+        "value": "Conception"
+      },
+      {
+        "key": "text-24",
+        "value": "Mise en œuvre"
+      },
+      {
+        "key": "text-25",
+        "value": "Parlons de votre prochain projet."
+      },
+      {
+        "key": "text-26",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "projects-heading",
+        "value": "Nos réalisations et projets"
+      },
+      {
+        "key": "historical-heading",
+        "value": "D’autres missions documentées."
+      },
+      {
+        "key": "historical-intro",
+        "value": "Des références publiées sur notre précédent site, replacées dans leur contexte."
+      }
+    ]
+  },
+  {
+    "slug": "reseaux-cloud",
+    "title": "Réseaux & cloud | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Services"
+      },
+      {
+        "key": "text-1",
+        "value": "Réseaux & cloud"
+      },
+      {
+        "key": "text-2",
+        "value": "Connectez vos équipes."
+      },
+      {
+        "key": "text-3",
+        "value": " Structurez vos ressources."
+      },
+      {
+        "key": "text-4",
+        "value": "Réseaux, serveurs et cloud : une infrastructure"
+      },
+      {
+        "key": "text-5",
+        "value": " pensée pour vos usages et votre organisation."
+      },
+      {
+        "key": "text-6",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-7",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-8",
+        "value": "01 / Périmètre"
+      },
+      {
+        "key": "text-9",
+        "value": "Un environnement cohérent, de bout en bout."
+      },
+      {
+        "key": "text-10",
+        "value": "Réseaux locaux & Wi-Fi"
+      },
+      {
+        "key": "text-11",
+        "value": "Conception et installation, câblage structuré, routeurs, switches et points d’accès Wi-Fi ; gestion, supervision et optimisation du réseau."
+      },
+      {
+        "key": "text-12",
+        "value": "Interconnexion & VPN"
+      },
+      {
+        "key": "text-13",
+        "value": "Liaisons PTP/PTMP et VPN site-à-site ; connectivité temporaire pour salons et événements, avec assistance sur site et téléphonie IP."
+      },
+      {
+        "key": "text-14",
+        "value": "Serveurs & cloud"
+      },
+      {
+        "key": "text-15",
+        "value": "Serveurs, NAS et datacenter, virtualisation de serveurs et postes ; migration, stockage et suivi cloud."
+      },
+      {
+        "key": "text-16",
+        "value": "Protection & sauvegardes"
+      },
+      {
+        "key": "text-17",
+        "value": "Sauvegarde et récupération, audit de vulnérabilités, pare-feu, antivirus et détection d’intrusions ; formation cybersécurité."
+      },
+      {
+        "key": "text-18",
+        "value": "02 / Méthode"
+      },
+      {
+        "key": "text-19",
+        "value": "Chaque projet part de votre terrain."
+      },
+      {
+        "key": "text-20",
+        "value": "Comprendre"
+      },
+      {
+        "key": "text-21",
+        "value": "Sites, usages, contraintes"
+      },
+      {
+        "key": "text-22",
+        "value": "Concevoir"
+      },
+      {
+        "key": "text-23",
+        "value": "Architecture et périmètre"
+      },
+      {
+        "key": "text-24",
+        "value": "Déployer"
+      },
+      {
+        "key": "text-25",
+        "value": "Installation et tests"
+      },
+      {
+        "key": "text-26",
+        "value": "Transmettre"
+      },
+      {
+        "key": "text-27",
+        "value": "Documentation et suivi"
+      },
+      {
+        "key": "text-28",
+        "value": "Réalisation"
+      },
+      {
+        "key": "text-29",
+        "value": "Groupe Hage"
+      },
+      {
+        "key": "text-30",
+        "value": "Réseau Wi-Fi"
+      },
+      {
+        "key": "text-31",
+        "value": "Voir le projet "
+      },
+      {
+        "key": "text-32",
+        "value": "Illustration du domaine d’intervention"
+      },
+      {
+        "key": "text-33",
+        "value": "03 / Questions fréquentes"
+      },
+      {
+        "key": "text-34",
+        "value": "Avant de démarrer."
+      },
+      {
+        "key": "text-35",
+        "value": "Faut-il tout remplacer ?"
+      },
+      {
+        "key": "text-36",
+        "value": "Nous étudions l’existant et les évolutions réellement utiles."
+      },
+      {
+        "key": "text-37",
+        "value": "Cloud ou serveurs sur site ?"
+      },
+      {
+        "key": "text-38",
+        "value": "Le choix dépend de vos applications, de vos accès et de vos contraintes."
+      },
+      {
+        "key": "text-39",
+        "value": "Votre réseau doit évoluer ?"
+      },
+      {
+        "key": "text-40",
+        "value": "Présentez-nous votre installation et votre projet."
+      },
+      {
+        "key": "text-41",
+        "value": "Parlons de votre besoin "
+      }
+    ]
+  },
+  {
+    "slug": "services",
+    "title": "Nos services informatiques | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Nos services"
+      },
+      {
+        "key": "text-1",
+        "value": "Une expertise technique."
+      },
+      {
+        "key": "text-2",
+        "value": " Quatre leviers pour"
+      },
+      {
+        "key": "text-3",
+        "value": " votre entreprise."
+      },
+      {
+        "key": "text-4",
+        "value": "Des solutions concrètes pour connecter vos équipes,"
+      },
+      {
+        "key": "text-5",
+        "value": " structurer vos outils et accompagner votre activité."
+      },
+      {
+        "key": "text-6",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-7",
+        "value": "Visuel d’illustration"
+      },
+      {
+        "key": "text-8",
+        "value": "Nos services"
+      },
+      {
+        "key": "text-9",
+        "value": "De l’infrastructure aux usages."
+      },
+      {
+        "key": "text-10",
+        "value": "Réseaux & cloud"
+      },
+      {
+        "key": "text-11",
+        "value": "Connecter et structurer votre environnement."
+      },
+      {
+        "key": "text-12",
+        "value": "Réseaux"
+      },
+      {
+        "key": "text-13",
+        "value": "Wi-Fi"
+      },
+      {
+        "key": "text-14",
+        "value": "Cloud"
+      },
+      {
+        "key": "text-15",
+        "value": "Découvrir le service "
+      },
+      {
+        "key": "text-16",
+        "value": "Solutions métier"
+      },
+      {
+        "key": "text-17",
+        "value": "Des outils adaptés à vos processus."
+      },
+      {
+        "key": "text-18",
+        "value": "Gestion"
+      },
+      {
+        "key": "text-19",
+        "value": "Collaboration"
+      },
+      {
+        "key": "text-20",
+        "value": "Organisation"
+      },
+      {
+        "key": "text-21",
+        "value": "Découvrir le service "
+      },
+      {
+        "key": "text-22",
+        "value": "Développement & API"
+      },
+      {
+        "key": "text-23",
+        "value": "Créer et connecter vos applications."
+      },
+      {
+        "key": "text-24",
+        "value": "Sites web"
+      },
+      {
+        "key": "text-25",
+        "value": "Applications"
+      },
+      {
+        "key": "text-26",
+        "value": "API"
+      },
+      {
+        "key": "text-27",
+        "value": "Découvrir le service "
+      },
+      {
+        "key": "text-28",
+        "value": "Maintenance et support"
+      },
+      {
+        "key": "text-29",
+        "value": "Accompagner votre informatique au quotidien."
+      },
+      {
+        "key": "text-30",
+        "value": "Maintenance"
+      },
+      {
+        "key": "text-31",
+        "value": "Assistance"
+      },
+      {
+        "key": "text-32",
+        "value": "Évolution"
+      },
+      {
+        "key": "text-33",
+        "value": "Découvrir le service "
+      },
+      {
+        "key": "text-34",
+        "value": "Notre approche"
+      },
+      {
+        "key": "text-35",
+        "value": "Un accompagnement, du conseil à la mise en service."
+      },
+      {
+        "key": "text-36",
+        "value": "Comprendre"
+      },
+      {
+        "key": "text-37",
+        "value": "Conseil IT et stratégie : usages, contraintes, priorités et feuille de route."
+      },
+      {
+        "key": "text-38",
+        "value": "Concevoir"
+      },
+      {
+        "key": "text-39",
+        "value": "Gestion de projet, architecture et intégration des systèmes retenus."
+      },
+      {
+        "key": "text-40",
+        "value": "Accompagner"
+      },
+      {
+        "key": "text-41",
+        "value": "Planification, déploiement, formation en réseau, virtualisation, cloud et sécurité, puis accompagnement."
+      },
+      {
+        "key": "text-42",
+        "value": "Quel est votre prochain besoin ?"
+      },
+      {
+        "key": "text-43",
+        "value": "Parlons de votre besoin "
+      }
+    ]
+  },
+  {
+    "slug": "solutions-metier",
+    "title": "Solutions métier | 5/Sync IT",
+    "texts": [
+      {
+        "key": "text-0",
+        "value": "Ventes"
+      },
+      {
+        "key": "text-1",
+        "value": "Achats"
+      },
+      {
+        "key": "text-2",
+        "value": "Stocks"
+      },
+      {
+        "key": "text-3",
+        "value": "Facturation"
+      },
+      {
+        "key": "text-4",
+        "value": "Services"
+      },
+      {
+        "key": "text-5",
+        "value": "Solutions métier"
+      },
+      {
+        "key": "text-6",
+        "value": "Des outils adaptés"
+      },
+      {
+        "key": "text-7",
+        "value": " au travail de vos équipes."
+      },
+      {
+        "key": "text-8",
+        "value": "ERP et logiciels métier : clarifier vos processus,"
+      },
+      {
+        "key": "text-9",
+        "value": " préparer le déploiement et accompagner les usages."
+      },
+      {
+        "key": "text-10",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "text-11",
+        "value": "Schéma d’illustration"
+      },
+      {
+        "key": "text-12",
+        "value": "01 / Périmètre"
+      },
+      {
+        "key": "text-13",
+        "value": "Partir de votre fonctionnement."
+      },
+      {
+        "key": "text-14",
+        "value": "Les bons outils"
+      },
+      {
+        "key": "text-15",
+        "value": " commencent par"
+      },
+      {
+        "key": "text-16",
+        "value": " les bonnes questions."
+      },
+      {
+        "key": "text-17",
+        "value": "Cadrer les besoins"
+      },
+      {
+        "key": "text-18",
+        "value": "Opérations, utilisateurs, données et priorités."
+      },
+      {
+        "key": "text-19",
+        "value": "Préparer le déploiement"
+      },
+      {
+        "key": "text-20",
+        "value": "Paramétrage, reprise des données et tests."
+      },
+      {
+        "key": "text-21",
+        "value": "Accompagner les équipes"
+      },
+      {
+        "key": "text-22",
+        "value": "Prise en main, mise en service et support à définir."
+      },
+      {
+        "key": "text-23",
+        "value": "02 / Méthode"
+      },
+      {
+        "key": "text-24",
+        "value": "Du processus à l’usage."
+      },
+      {
+        "key": "text-25",
+        "value": "Observer"
+      },
+      {
+        "key": "text-26",
+        "value": "Vos pratiques actuelles"
+      },
+      {
+        "key": "text-27",
+        "value": "Paramétrer"
+      },
+      {
+        "key": "text-28",
+        "value": "Les fonctions retenues"
+      },
+      {
+        "key": "text-29",
+        "value": "Tester"
+      },
+      {
+        "key": "text-30",
+        "value": "Les cas concrets"
+      },
+      {
+        "key": "text-31",
+        "value": "Accompagner"
+      },
+      {
+        "key": "text-32",
+        "value": "La prise en main"
+      },
+      {
+        "key": "text-33",
+        "value": "Vos logiciels doivent échanger ?"
+      },
+      {
+        "key": "text-34",
+        "value": "Nous étudions les intégrations possibles et les contraintes de chaque éditeur."
+      },
+      {
+        "key": "text-35",
+        "value": "03 / Questions fréquentes"
+      },
+      {
+        "key": "text-36",
+        "value": "Un projet bien délimité."
+      },
+      {
+        "key": "text-37",
+        "value": "Peut-on garder certains outils ?"
+      },
+      {
+        "key": "text-38",
+        "value": "Oui, leur rôle et les échanges possibles sont étudiés au cadrage."
+      },
+      {
+        "key": "text-39",
+        "value": "Le support est-il inclus ?"
+      },
+      {
+        "key": "text-40",
+        "value": "Son périmètre et ses modalités sont précisés dans la proposition."
+      },
+      {
+        "key": "text-41",
+        "value": "Parlons de votre organisation."
+      },
+      {
+        "key": "text-42",
+        "value": "Quels outils utilisez-vous ? Qu’aimeriez-vous simplifier ?"
+      },
+      {
+        "key": "text-43",
+        "value": "Parlons de votre besoin "
+      },
+      {
+        "key": "catalogue-heading",
+        "value": "Six gammes pour vos usages."
+      },
+      {
+        "key": "catalogue-intro",
+        "value": "Des solutions à configurer et à intégrer selon votre organisation, vos besoins et votre environnement."
+      },
+      {
+        "key": "product-5-docs-name",
+        "value": "5-Docs"
+      },
+      {
+        "key": "product-5-docs-category",
+        "value": "GED & SAE"
+      },
+      {
+        "key": "product-5-docs-summary",
+        "value": "Gestion, stockage et recherche documentaire ; cycle de vie, métadonnées, droits d’accès et traçabilité. Intégration à votre système d’information selon son environnement."
+      },
+      {
+        "key": "product-5-gestion-name",
+        "value": "5-Gestion"
+      },
+      {
+        "key": "product-5-gestion-category",
+        "value": "ERP modulaire"
+      },
+      {
+        "key": "product-5-gestion-summary",
+        "value": "CRM et ventes, RH, CMS/site et point de vente, marketing, productivité, finance et facturation, produits et stocks. Modules et intégrations adaptés aux TPE, PME, associations et grands groupes, selon les besoins et l’environnement de déploiement."
+      },
+      {
+        "key": "product-5-secu-name",
+        "value": "5-Secu"
+      },
+      {
+        "key": "product-5-secu-category",
+        "value": "Sûreté physique"
+      },
+      {
+        "key": "product-5-secu-summary",
+        "value": "Contrôle d’accès, détection d’intrusion et vidéosurveillance pour protéger les locaux et organiser les accès physiques."
+      },
+      {
+        "key": "product-5-cyber-name",
+        "value": "5-Cyber"
+      },
+      {
+        "key": "product-5-cyber-category",
+        "value": "Cybersécurité"
+      },
+      {
+        "key": "product-5-cyber-summary",
+        "value": "Diagnostic de sécurité, intervention après incident et amélioration des protections du système d’information."
+      },
+      {
+        "key": "product-5-com-name",
+        "value": "5-Com"
+      },
+      {
+        "key": "product-5-com-category",
+        "value": "Communication"
+      },
+      {
+        "key": "product-5-com-summary",
+        "value": "Téléphonie IP, serveur vocal interactif et services Push & Pull SMS pour vos échanges et vos parcours de communication."
+      },
+      {
+        "key": "product-5-sign-name",
+        "value": "5-Sign"
+      },
+      {
+        "key": "product-5-sign-category",
+        "value": "Organisation & affichage"
+      },
+      {
+        "key": "product-5-sign-summary",
+        "value": "Gestion des files d’attente, du temps de travail et de la publicité digitale."
+      }
+    ]
+  }
+]

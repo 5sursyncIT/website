@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.agents
+.aws
+.codex
+.env*
+secrets
+storage
+backups
+preparation
+source
+documentation
+*.tsbuildinfo

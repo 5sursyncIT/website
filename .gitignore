@@ -1,0 +1,25 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+secrets/
+*.tsbuildinfo
+storage/
+backups/
+
+# Exclus de la publication (dépôt public)
+imports/*.sql
+imports/*.json
+preparation/
+source/
+tests/out*/
+documentation/qa/
+deployment/*.tar.gz
+deployment/*.path
+deployment/verification*.json
+deployment/__pycache__/
+__pycache__/
+*.pem
+*.key
+*.dump

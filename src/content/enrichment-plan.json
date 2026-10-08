@@ -1,0 +1,280 @@
+{
+  "pages": {
+    "a-propos": {
+      "replacements": [
+        {
+          "key": "text-9",
+          "before": "Réseaux, cloud, solutions métier et développement : nous construisons des réponses adaptées à vos usages et à votre environnement.",
+          "after": "Conseil IT, réseaux, cloud, solutions métier et développement : nous intégrons les systèmes et pilotons les projets, de la planification à la mise en service."
+        },
+        {
+          "key": "text-11",
+          "before": "Une expérience également nourrie par des projets institutionnels.",
+          "after": "Une expérience également nourrie par des projets institutionnels et la transmission des compétences en réseau, virtualisation, cloud et sécurité."
+        }
+      ],
+      "additions": []
+    },
+    "contact": {
+      "replacements": [
+        {
+          "key": "text-8",
+          "before": "Utilisez le formulaire ci-contre",
+          "after": "contact@5sursync.com"
+        },
+        {
+          "key": "text-9",
+          "before": "Dakar, Sénégal",
+          "after": "Almadie 2, Résidence El'hadji Oumar Dieng, 4ème A, Sénégal"
+        },
+        {
+          "key": "phone",
+          "before": "77 097 29 08",
+          "after": "+221 77 097 29 08"
+        }
+      ],
+      "additions": [
+        {
+          "key": "phone-landline",
+          "value": "+221 33 805 79 09"
+        },
+        {
+          "key": "phone-mobile",
+          "value": "+221 76 881 30 39"
+        },
+        {
+          "key": "map-label",
+          "value": "Nous trouver"
+        },
+        {
+          "key": "map-title",
+          "value": "Notre adresse."
+        },
+        {
+          "key": "map-directions",
+          "value": "Ouvrir l’itinéraire"
+        },
+        {
+          "key": "map-note",
+          "value": "La carte recherche l’adresse indiquée. Confirmez la résidence avec nous avant votre déplacement."
+        },
+        {
+          "key": "map-search",
+          "value": "Rechercher cette adresse dans Google Maps"
+        }
+      ]
+    },
+    "developpement-api": {
+      "replacements": [
+        {
+          "key": "text-14",
+          "before": "Portails, outils de gestion et parcours adaptés aux utilisateurs.",
+          "after": "Applications web et mobiles sur mesure, portails et outils de gestion conçus autour des usages des équipes."
+        },
+        {
+          "key": "text-16",
+          "before": "Faire circuler les données entre vos logiciels, selon les accès disponibles.",
+          "after": "Intégrations au système d’information et API : faire circuler les données selon les droits d’accès et les possibilités de chaque logiciel."
+        },
+        {
+          "key": "text-18",
+          "before": "Présenter votre activité et orienter les visiteurs vers la bonne action.",
+          "after": "Sites vitrines et institutionnels pour présenter votre activité et orienter les visiteurs."
+        },
+        {
+          "key": "text-29",
+          "before": "Maintenance, documentation et accès d’administration sont à préciser dès le cadrage.",
+          "after": "Maintenance, mises à jour et évolutions, avec documentation et accès d’administration précisés dès le cadrage."
+        }
+      ],
+      "additions": []
+    },
+    "maintenance-support": {
+      "replacements": [
+        {
+          "key": "text-11",
+          "before": "Aider les équipes sur les postes et logiciels concernés.",
+          "after": "Assistance à distance ou sur site et accompagnement des utilisateurs sur les postes et logiciels concernés."
+        },
+        {
+          "key": "text-13",
+          "before": "Identifier les causes et traiter les équipements couverts.",
+          "after": "Maintenance corrective et diagnostic : identifier les causes et traiter les incidents sur les équipements couverts."
+        },
+        {
+          "key": "text-15",
+          "before": "Planifier les vérifications selon les besoins du parc.",
+          "after": "Maintenance préventive, audits et vérifications planifiées selon les besoins du parc."
+        },
+        {
+          "key": "text-17",
+          "before": "Préparer les mises à jour et les renouvellements utiles.",
+          "after": "Conseil, mises à jour, évolutions et sensibilisation des utilisateurs."
+        },
+        {
+          "key": "text-29",
+          "before": "Avec ou sans responsable informatique en interne, nous précisons ensemble les responsabilités et les modalités d’intervention.",
+          "after": "Avec ou sans équipe informatique interne, le périmètre, les responsabilités, les horaires et les modalités d’intervention sont définis selon le contrat."
+        }
+      ],
+      "additions": [
+        {
+          "key": "support-access-label",
+          "value": "Déjà client ?"
+        },
+        {
+          "key": "support-access-link",
+          "value": "Accéder à votre espace Support"
+        }
+      ]
+    },
+    "realisations": {
+      "replacements": [],
+      "additions": [
+        {
+          "key": "historical-heading",
+          "value": "D’autres missions documentées."
+        },
+        {
+          "key": "historical-intro",
+          "value": "Des références publiées sur notre précédent site, replacées dans leur contexte."
+        }
+      ]
+    },
+    "reseaux-cloud": {
+      "replacements": [
+        {
+          "key": "text-11",
+          "before": "Une couverture adaptée à vos espaces et à vos équipes.",
+          "after": "Conception et installation, câblage structuré, routeurs, switches et points d’accès Wi-Fi ; gestion, supervision et optimisation du réseau."
+        },
+        {
+          "key": "text-13",
+          "before": "Relier vos sites et organiser les accès.",
+          "after": "Liaisons PTP/PTMP et VPN site-à-site ; connectivité temporaire pour salons et événements, avec assistance sur site et téléphonie IP."
+        },
+        {
+          "key": "text-15",
+          "before": "Préparer vos migrations et vos environnements.",
+          "after": "Serveurs, NAS et datacenter, virtualisation de serveurs et postes ; migration, stockage et suivi cloud."
+        },
+        {
+          "key": "text-17",
+          "before": "Définir les accès et les conditions de reprise.",
+          "after": "Sauvegarde et récupération, audit de vulnérabilités, pare-feu, antivirus et détection d’intrusions ; formation cybersécurité."
+        }
+      ],
+      "additions": []
+    },
+    "services": {
+      "replacements": [
+        {
+          "key": "text-35",
+          "before": "Un accompagnement, du besoin à la mise en service.",
+          "after": "Un accompagnement, du conseil à la mise en service."
+        },
+        {
+          "key": "text-37",
+          "before": "Vos usages, vos contraintes, vos priorités.",
+          "after": "Conseil IT et stratégie : usages, contraintes, priorités et feuille de route."
+        },
+        {
+          "key": "text-39",
+          "before": "Une solution adaptée à votre environnement.",
+          "after": "Gestion de projet, architecture et intégration des systèmes retenus."
+        },
+        {
+          "key": "text-41",
+          "before": "Le déploiement, la prise en main et le suivi.",
+          "after": "Planification, déploiement, formation en réseau, virtualisation, cloud et sécurité, puis accompagnement."
+        }
+      ],
+      "additions": []
+    },
+    "solutions-metier": {
+      "replacements": [],
+      "additions": [
+        {
+          "key": "catalogue-heading",
+          "value": "Six gammes pour vos usages."
+        },
+        {
+          "key": "catalogue-intro",
+          "value": "Des solutions à configurer et à intégrer selon votre organisation, vos besoins et votre environnement."
+        },
+        {
+          "key": "product-5-docs-name",
+          "value": "5-Docs"
+        },
+        {
+          "key": "product-5-docs-category",
+          "value": "GED & SAE"
+        },
+        {
+          "key": "product-5-docs-summary",
+          "value": "Gestion, stockage et recherche documentaire ; cycle de vie, métadonnées, droits d’accès et traçabilité. Intégration à votre système d’information selon son environnement."
+        },
+        {
+          "key": "product-5-gestion-name",
+          "value": "5-Gestion"
+        },
+        {
+          "key": "product-5-gestion-category",
+          "value": "ERP modulaire"
+        },
+        {
+          "key": "product-5-gestion-summary",
+          "value": "CRM et ventes, RH, CMS/site et point de vente, marketing, productivité, finance et facturation, produits et stocks. Modules et intégrations adaptés aux TPE, PME, associations et grands groupes, selon les besoins et l’environnement de déploiement."
+        },
+        {
+          "key": "product-5-secu-name",
+          "value": "5-Secu"
+        },
+        {
+          "key": "product-5-secu-category",
+          "value": "Sûreté physique"
+        },
+        {
+          "key": "product-5-secu-summary",
+          "value": "Contrôle d’accès, détection d’intrusion et vidéosurveillance pour protéger les locaux et organiser les accès physiques."
+        },
+        {
+          "key": "product-5-cyber-name",
+          "value": "5-Cyber"
+        },
+        {
+          "key": "product-5-cyber-category",
+          "value": "Cybersécurité"
+        },
+        {
+          "key": "product-5-cyber-summary",
+          "value": "Diagnostic de sécurité, intervention après incident et amélioration des protections du système d’information."
+        },
+        {
+          "key": "product-5-com-name",
+          "value": "5-Com"
+        },
+        {
+          "key": "product-5-com-category",
+          "value": "Communication"
+        },
+        {
+          "key": "product-5-com-summary",
+          "value": "Téléphonie IP, serveur vocal interactif et services Push & Pull SMS pour vos échanges et vos parcours de communication."
+        },
+        {
+          "key": "product-5-sign-name",
+          "value": "5-Sign"
+        },
+        {
+          "key": "product-5-sign-category",
+          "value": "Organisation & affichage"
+        },
+        {
+          "key": "product-5-sign-summary",
+          "value": "Gestion des files d’attente, du temps de travail et de la publicité digitale."
+        }
+      ]
+    }
+  }
+}

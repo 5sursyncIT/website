@@ -1,0 +1,35 @@
+services:
+  app-production:
+    image: 5sursync:production-approved
+    build:
+      context: .
+      args:
+        SITE_ORIGIN: https://5sursync.com
+        SITE_INDEXABLE: '1'
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    ports: ["127.0.0.1:3106:3000"]
+    environment:
+      APP_ORIGIN: https://5sursync.com
+      ADMIN_ORIGIN: http://localhost:3106
+      SITE_ORIGIN: https://5sursync.com
+      SITE_INDEXABLE: '1'
+      BOOTSTRAP_ADMIN_EMAIL: ydiop@5sursync.com
+      DATABASE_URI_FILE: /run/secrets/database_uri
+      PAYLOAD_SECRET_FILE: /run/secrets/payload_secret
+      PRIVATE_UPLOAD_PATH: /app/storage/private
+      MEDIA_STORAGE_PATH: /app/storage/media
+    secrets: [database_uri, payload_secret]
+    volumes: [private_files:/app/storage/private, public_media:/app/storage/media]
+    networks: [database, egress]
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:3000/api/health").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 60s
+    mem_limit: 2g
+    cpus: 1.5
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]

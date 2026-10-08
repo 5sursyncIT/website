@@ -1,0 +1,52 @@
+{
+  "name": "5sursync",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build --webpack",
+    "start": "next start --hostname 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "payload": "payload",
+    "generate:types": "payload generate:types",
+    "migrate": "payload migrate",
+    "migrate:create": "payload migrate:create",
+    "seed:content": "tsx scripts/seed-content.ts"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.90.2",
+    "@payloadcms/next": "3.90.2",
+    "@payloadcms/richtext-lexical": "3.90.2",
+    "@payloadcms/translations": "3.90.2",
+    "@payloadcms/ui": "3.90.2",
+    "graphql": "16.11.0",
+    "next": "16.3.8",
+    "nodemailer": "10.0.16",
+    "payload": "3.90.2",
+    "pdf-lib": "1.17.1",
+    "pg": "8.16.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sharp": "0.35.5",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.15",
+    "@types/pg": "8.15.6",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "undici": "7.30.0",
+    "sass": "1.105.1",
+    "dompurify": "3.4.16",
+    "esbuild": "0.28.2"
+  }
+}

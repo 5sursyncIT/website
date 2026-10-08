@@ -1,0 +1,127 @@
+/* 5/Sync IT admin skin: unlayered, so it overrides Payload's default layer. */
+:root {
+  --sync-navy: #092234;
+  --sync-ink: #080d24;
+  --sync-teal: #00b9b4;
+  --sync-teal-dark: #008d89;
+  --sync-pale: #eaf7fc;
+  --sync-line: #dbe5ee;
+  --sync-warn: #b54708;
+}
+html[data-theme="light"] {
+  --theme-bg: #f6f9fb;
+  --theme-input-bg: #fff;
+}
+
+/* Brand graphics */
+/* Login logo (transparent PNG); packets loop around the frame
+   (rect pathLength=100: a dash of 7 is 7 % of the perimeter). */
+.sync-admin-logo { position: relative; width: 100%; max-width: 420px; padding: 30px 34px; }
+.sync-admin-logo img { display: block; width: 100%; height: auto; }
+.sync-admin-logo-flow { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sync-admin-logo-flow rect { x: 1px; y: 1px; width: calc(100% - 2px); height: calc(100% - 2px); fill: none; }
+.sync-flow-track { stroke: #d3dee8; stroke-width: 1; }
+.sync-flow-packet { stroke-width: 2.5; stroke-linecap: round; }
+.sync-flow-a { stroke: #00b9b4; stroke-dasharray: 7 93; filter: drop-shadow(0 0 3px rgba(0, 185, 180, .8)); animation: sync-flow 5s linear infinite; }
+.sync-flow-b { stroke: #2ee9d8; stroke-dasharray: 3 47; filter: drop-shadow(0 0 3px rgba(46, 233, 216, .8)); animation: sync-flow-reverse 7s linear infinite; }
+.sync-flow-c { stroke: #092234; stroke-width: 2; stroke-dasharray: 2 31.3; opacity: .55; animation: sync-flow 9s linear infinite; }
+@keyframes sync-flow { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -100; } }
+@keyframes sync-flow-reverse { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 100; } }
+@media (prefers-reduced-motion: reduce) {
+  .sync-flow-packet { display: none; }
+}
+.sync-admin-icon { display: block; width: 28px; height: 28px; object-fit: contain; }
+
+/* Navigation */
+.nav { background: #fff; border-right: 1px solid var(--sync-line); }
+.nav-group__toggle { color: var(--sync-navy); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: .08em; }
+.nav__link { border-radius: 6px; padding-left: 10px; }
+.nav__link:hover { background: var(--sync-pale); color: var(--sync-navy); }
+.nav__link.active, .nav__link[aria-current="page"] { background: var(--sync-pale); color: var(--sync-navy); font-weight: 600; }
+.nav__link-indicator { background: var(--sync-teal); }
+
+/* Buttons and links */
+.btn--style-primary { background: var(--sync-navy); color: #fff; }
+.btn--style-primary:hover, .btn--style-primary:focus-visible { background: var(--sync-teal-dark); color: #fff; }
+.btn--style-secondary { box-shadow: inset 0 0 0 1px var(--sync-navy); color: var(--sync-navy); }
+.btn--style-secondary:hover { box-shadow: inset 0 0 0 1px var(--sync-teal-dark); color: var(--sync-teal-dark); }
+
+/* Read-only content (contact requests) must stay legible, not greyed out */
+.field-type.read-only input,
+.field-type.read-only textarea {
+  color: var(--sync-ink);
+  -webkit-text-fill-color: var(--sync-ink);
+  background: #fff;
+  opacity: 1;
+}
+
+/* Dashboard summary */
+.sync-overview { margin-bottom: 40px; }
+.sync-overview__head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.sync-overview__head h2 { margin: 0; color: var(--sync-navy); }
+.sync-overview__site { color: var(--sync-teal-dark); font-weight: 600; text-decoration: none; }
+.sync-overview__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.sync-stat { display: flex; flex-direction: column; gap: 4px; padding: 20px; border: 1px solid var(--sync-line); border-left: 4px solid var(--sync-teal); border-radius: 8px; background: #fff; color: var(--sync-ink); text-decoration: none; }
+.sync-stat:hover { border-color: var(--sync-teal); }
+.sync-stat strong { font-size: 32px; line-height: 1; color: var(--sync-navy); }
+.sync-stat span { color: #5f7899; }
+.sync-stat--warn { border-left-color: var(--sync-warn); }
+.sync-stat--warn strong { color: var(--sync-warn); }
+.sync-overview__lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.sync-panel { padding: 20px; border: 1px solid var(--sync-line); border-radius: 8px; background: #fff; }
+.sync-panel h3 { margin: 0 0 12px; font-size: 16px; color: var(--sync-navy); }
+.sync-panel ul { list-style: none; margin: 0; padding: 0; }
+.sync-panel li + li { border-top: 1px solid var(--sync-line); }
+.sync-panel li a { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; color: var(--sync-ink); text-decoration: none; }
+.sync-panel li a:hover strong { color: var(--sync-teal-dark); }
+.sync-panel small { color: #5f7899; }
+.sync-panel__empty { margin: 0; color: #5f7899; }
+
+/* Contact request reply shortcuts */
+.sync-contact-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; padding: 16px; border-radius: 8px; background: var(--sync-pale); }
+.sync-contact-actions__title { margin: 0; font-weight: 700; color: var(--sync-navy); }
+.sync-contact-actions__btn { margin: 0; width: 100%; justify-content: center; text-align: center; text-decoration: none; overflow-wrap: anywhere; }
+
+/* Page text rows */
+.sync-copy-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sync-copy-label span { color: #5f7899; font-weight: 400; }
+
+/* Auth has no mail transport (disabledEmail): hide the reset link rather than fake a sent email */
+a[href$="/admin/forgot"] { display: none; }
+
+/* Ticket conversation */
+.sync-thread { margin: 32px 0; padding-top: 24px; border-top: 1px solid var(--sync-line); }
+.sync-thread h3 { margin: 0 0 16px; color: var(--sync-navy); }
+.sync-thread__item { margin-bottom: 12px; padding: 14px 16px; border-radius: 8px; background: #fff; border: 1px solid var(--sync-line); border-left: 4px solid var(--sync-teal); }
+.sync-thread__item--note { background: #fffaeb; border-left-color: var(--sync-warn); }
+.sync-thread__item header { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.sync-thread__item small, .sync-thread__empty, .sync-thread__hint { color: #5f7899; }
+.sync-thread__item p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sync-thread__compose { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.sync-thread__compose textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--sync-line); border-radius: 6px; font: inherit; background: #fff; color: var(--sync-ink); }
+.sync-thread__tabs { display: flex; gap: 20px; flex-wrap: wrap; }
+.sync-thread__tabs label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.sync-thread__error { margin: 0; color: #b42318; }
+.sync-thread__hint { margin: 0; font-size: 13px; }
+.sync-thread__compose .btn { align-self: flex-start; margin: 0; }
+
+/* Client company page */
+.sync-client { display: grid; gap: 20px; margin-top: 24px; }
+.sync-client__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sync-client__head span { color: #5f7899; }
+.sync-panel li.sync-client__row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.sync-client__row > a { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
+.sync-client__row .btn { margin: 0; }
+.sync-badge { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.sync-badge--ok { background: #e3f8f1; color: #05603a; }
+.sync-badge--wait { background: #fff4e0; color: #93370d; }
+.sync-badge--off { background: #eef2f6; color: #475467; }
+.sync-client__invite { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--sync-line); display: flex; flex-direction: column; gap: 10px; }
+.sync-client__invite h4 { margin: 0; color: var(--sync-navy); }
+.sync-client__fields { display: flex; gap: 10px; flex-wrap: wrap; }
+.sync-client__fields input { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1px solid var(--sync-line); border-radius: 6px; font: inherit; background: #fff; color: var(--sync-ink); }
+.sync-client__fields .btn { margin: 0; }
+.sync-client__link { padding: 12px; border-radius: 8px; background: var(--sync-pale); display: flex; flex-direction: column; gap: 8px; }
+.sync-client__link p { margin: 0; }
+.sync-client__link textarea { width: 100%; padding: 8px; border: 1px solid var(--sync-line); border-radius: 6px; font: 13px/1.4 monospace; background: #fff; overflow-wrap: anywhere; }
+.sync-client__link .btn { align-self: flex-start; margin: 0; }

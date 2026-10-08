@@ -1,0 +1,50 @@
+SUPPORT CLIENT — V1 requise, préparation fonctionnelle (code non réalisé)
+Routes publiques existantes conservées ; ajouter lien Support vers /support.
+/support : connexion client, sans inscription publique ; après connexion tableau
+' Mes tickets ', statut, date, bouton ' Ouvrir un ticket '. Formulaire sujet,
+catégorie, description et pièces jointes. /support/tickets/[id] : fil des réponses,
+statut, fichiers, ajout de réponse. Aucun délai ou support 24/7 annoncé.
+
+Modèle Payload/PostgreSQL :
+- clients : organisation, nom ; données privées, gestion équipe uniquement.
+- comptesClients (auth séparée d'admins) : relation client obligatoire, enabled,
+  invitation/activation contrôlée et vérifiée ; aucune auto-attribution client/role.
+- tickets : client obligatoire dérivé de l'identité serveur, auteur, sujet,
+  catégorie, statut (ouvert/en_cours/en_attente_client/resolu/ferme), dates.
+- reponsesTickets : ticket, auteur dérivé serveur, message ; notes internes
+  séparées et strictement invisibles aux clients.
+- fichiersTickets : ticket, uploader serveur, storageKey aléatoire, mime réel,
+  taille, état quarantaine/accepté ; stockage hors public et hors collection
+  média publique. URL authentifiée uniquement, aucun chemin disque exposé.
+
+Accès côté serveur :
+- Auth client et équipe distinguées par collection, pas seulement présence user.
+- Client enabled : requêtes bornées à son client ; réévaluer permissions pour
+  chaque lecture/écriture/téléchargement. Un id fourni par URL ne suffit jamais.
+- Création impose client/auteur serveur ; rejeter champs client/role/status
+  fournis par un client. Réponse uniquement sur ticket appartenant à son client.
+- Équipe authentifiée : traitement en administration, visibilité maîtrisée.
+- Refuser anonymous partout hors connexion et invitation validée ; pas de
+  bypass overrideAccess dans routes publiques. Ne pas déduire confiance du UI.
+- Notifications après stockage durable ; pas de mail annoncé sans transport.
+
+Fichiers : proposition à valider 5 MiB/fichier, 3 fichiers/requête,
+PDF/JPEG/PNG uniquement ; vérifier signature, extension, MIME et taille,
+refuser SVG/HTML/exécutables/archives. Quarantaine jusqu'à scan si activé ;
+Content-Disposition attachment, nosniff, pas de cache public. Rate limiting
+connexion/création/réponse/upload durable, contrôle origine/CSRF.
+
+Tests obligatoires avant activation :
+1. Client A ne lit/liste/modifie ni ne répond/télécharge tickets/fichiers B.
+2. Id ticket/fichier deviné, association fichier à ticket B : refus serveur.
+3. A ne forge ni client B ni auteur/role/statut ; compte désactivé refusé.
+4. Client ne voit jamais notes internes ; anonyme refusé ; équipe autorisée.
+5. MIME forgé, fichier excessif, chemin traversant, fichier hors ticket refusés.
+6. Invitation expirée/réutilisée rejetée ; aucune inscription publique.
+7. Test stockage avant notification et absence de faux succès mail.
+8. Vérifier les mêmes règles via REST Payload, GraphQL si activé et API métier,
+   pas seulement dans les pages. Réponse 404/403 sans données tierces.
+
+Activation séparée : identité premier admin, politique invitations client,
+secrets/session et emails de récupération à valider de manière sécurisée.
+Aucun compte, invitation, secret ou transport configuré à ce stade.

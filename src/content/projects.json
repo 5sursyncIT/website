@@ -1,0 +1,9 @@
+[
+  {"key":"ina-guinee","name":"INA Guinée","country":"Guinée","domain":"Transformation numérique, archives, GED, ERP","status":"Sous contrat"},
+  {"key":"mairie-dakar","name":"Mairie de Dakar","country":"Sénégal","domain":"Réseau, fibre, ToIP, portail, support","status":"Réalisé"},
+  {"key":"rtg","name":"RTG","country":"Guinée","domain":"Formation, plan directeur broadcast","status":"Réalisé"},
+  {"key":"guce-anapi","name":"GUCE / ANAPI","country":"RD Congo","domain":"Audit et formation cybersécurité","status":"En cours"},
+  {"key":"harmattan-erp","name":"L’Harmattan Sénégal","country":"Sénégal","domain":"ERP, support ERP","status":"Sous contrat"},
+  {"key":"cpfa","name":"CPFA","country":"Sénégal","domain":"Plateforme web de formation","status":"Pré-lancement"},
+  {"key":"cnts","name":"CNTS","country":"Sénégal","domain":"Plateforme Web","status":"Réalisé"}
+]

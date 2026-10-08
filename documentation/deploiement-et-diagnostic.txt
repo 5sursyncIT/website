@@ -1,0 +1,75 @@
+5/Sync IT — diagnostic et préparation du 6 octobre 2026
+STATUT : NON DÉPLOYÉ. Aucune application production créée ou démarrée.
+
+Accès : Ubuntu ThinkPad-X13, alias ina-relay, 185.187.169.152:2022,
+inaops, identité ~/.ssh/ina-relay, IdentitiesOnly=yes, BatchMode=yes,
+StrictHostKeyChecking=yes. Serveur confirmé : ina-relay-direction.
+Le ssh système échoue sur les métadonnées de 20-systemd-ssh-proxy.conf ;
+-F ~/.ssh/config permet de conserver la configuration utilisateur sans modifier
+les permissions système ni la confiance SSH. Aucune clé privée lue/transférée.
+
+Ubuntu 24.04.4, RAM 7941 MiB, disponible 6819 MiB, disque libre 93 GiB.
+Docker, Compose, Node, npm, unzip absents du VPS ; Python3 disponible.
+Nginx actif ; aucun site HTTP activé. 443 appartient à stream-direction.conf.stream.
+Routes direction.ina.gn / mobile.ina.gn / auth.ina.gn vers 10.201.90.2:8443.
+proxy_protocol on : chaque upstream reçoit PROXY avant TLS. SNI inconnu rejeté.
+Aucune modification des services, Nginx, firewall, DNS, clés, permissions.
+
+ZIP : source/5Sync-IT_Maquette-HTML_LEGERE_2026-10-06.zip, 7245899 octets.
+Neuf pages HTML, six images, CSS et JS. Vrai HTML/CSS/JS inspecté ;
+référence visuelle 02_Services.png inspectée. Les photos sont des recadrages
+de captures : préserver initialement, puis remplacer seulement avec validation.
+Formulaire actuellement fictif, aucun backend ; ne jamais reprendre son faux succès.
+Adresse contact@5sursync.com explicitement à confirmer dans le ZIP.
+
+Implémentation prévue (non réalisée, aucun build exécuté) :
+1. Next.js / React / TypeScript avec Payload intégré (routes admin/API séparées
+   des routes publiques), adaptateur PostgreSQL ; versions compatibles à résoudre,
+   verrouiller et auditer avant build. Ne pas servir le ZIP comme produit final.
+2. Convertir les neuf pages en composants React, conserver logo, marine/turquoise,
+   navigation, responsive et ordre des quatre services. Réalisations : Groupe Hage
+   Wi-Fi, Harmattan Sénégal site vitrine. Aucune promesse ou métrique inventée.
+3. Collections CMS : administrateurs, services, réalisations, médias et demandes ;
+   globals pour pages/site. Édition structurée, pas de HTML arbitraire non nettoyé.
+   Pages pré-rendues, publication avec invalidation/revalidation maîtrisée.
+4. API contact : validation serveur, taille limitée, origine même site, honeypot,
+   antispam/rate limit durable ; commit PostgreSQL avant notification.
+   Sans SMTP confirmé : réponse 'demande enregistrée', aucun mail prétendu envoyé.
+   Demandes privées accessibles uniquement aux administrateurs authentifiés.
+5. Compose isolé nommé 5sursync : PostgreSQL sans ports publiés, volumes DB/médias,
+   application en boucle locale, healthchecks et migrations contrôlées.
+6. Administration accessible uniquement par tunnel SSH initialement ; bloquer
+   /admin et API de gestion sur la route publique. Définir politique de sauvegarde,
+   conservation des demandes et accès média avant ouverture.
+
+VALIDATIONS REQUISES AVANT ACTION À RISQUE :
+A. Installer Docker Engine/Compose et ses prérequis système. Ne pas ajouter
+   inaops au groupe docker sans autorisation distincte (accès équivalent root).
+B. Confirmer domaine public : 5sursync.com ou sous-domaine de préproduction.
+C. Approuver route SNI additive dans le relais existant et terminaison TLS locale
+   sur port libre (ex. 127.0.0.1:9443 avec listen ssl proxy_protocol). Conserver
+   routes INA/default et ne pas désactiver globalement proxy_protocol.
+   Aucun listen 443 HTTP supplémentaire. nginx -t avant rechargement validé.
+D. Valider génération locale serveur de secrets DB/CMS dans fichiers privés,
+   jamais dans le chat ; valider identité et procédure interactive sécurisée
+   du premier administrateur. Aucun secret ni compte créé à ce stade.
+E. Valider certificat/ACME/DNS, adresse contact et transport SMTP s'il souhaité.
+   Aucun firewall, accès persistant ou DNS modifié sans autorisation spécifique.
+
+Sauvegarde/retour arrière avant activation :
+- Conserver ZIP original et empreinte, application en releases horodatées.
+- Sauvegarder configurations Nginx concernées avant toute modification approuvée.
+- Sauvegarde DB pg_dump + médias hors volumes de travail ; tester restauration.
+- Garder release/image précédente, migrations réversibles ou restauration DB.
+- Retour arrière : route SNI ajoutée seulement, config sauvegardée vérifiée,
+  rechargement Nginx ; arrêt du seul projet Compose 5sursync sans effacer volumes.
+- Ne jamais docker compose down -v, purge globale ou arrêt de services INA.
+
+Vérifications restantes : installation/build/typecheck/tests API et antispam,
+pré-rendu neuf routes, mobile/accessibilité, stockage durable, migrations,
+restauration, healthchecks, HTTPS/SNI et non-régression des trois routes INA.
+
+AJOUT V1 EXPLICITE : espace Support authentifié obligatoire, comptes clients
+sur invitation, tickets, pièces jointes privées, réponses, statuts et traitement
+équipe CMS. Voir SUPPORT-V1.txt : modèle, interfaces, permissions serveur et
+matrice de tests interclients. Cette V1 n'est pas encore implémentée.

@@ -1,0 +1,30 @@
+# Activation of the CRM ↔ contact@ link (documentation/microsoft365.md, section 12).
+# Copy to deployment/compose.production.mail.yaml once Charlie (or the owner) has finished
+# the Entra / Exchange steps, replace the four <...> values (identifiers, not secrets), and
+# start production with:
+#   sudo docker compose -f compose.yaml -f compose.production.yaml -f deployment/compose.production.mail.yaml up -d --no-deps app-production
+# Preproduction never receives this file nor these secrets.
+services:
+  app-production:
+    environment:
+      MAIL_ENABLED: 'true'
+      MAIL_TENANT_ID: 17ea5f54-f67a-4949-b5b9-92a78a9d4fe7
+      MAIL_MAILBOX_ID: <ExternalDirectoryObjectId de contact@>
+      MAIL_MAILBOX_ADDRESS: <PrimarySmtpAddress vérifiée>
+      MAIL_READ_CLIENT_ID: <AppId de « 5sursync CRM – lecture et brouillons »>
+      MAIL_SEND_CLIENT_ID: <AppId de « 5sursync CRM – envoi »>
+      MAIL_READ_KEY_FILE: /run/secrets/m365_read_key
+      MAIL_READ_CERT_FILE: /run/secrets/m365_read_cert
+      MAIL_SEND_KEY_FILE: /run/secrets/m365_send_key
+      MAIL_SEND_CERT_FILE: /run/secrets/m365_send_cert
+      MAIL_SYNC_SINCE_DAYS: '90'
+      # Acceptance: only the test address confirmed by the owner. Empty = sending closed;
+      # '*' = open (only after the owner validates the acceptance).
+      MAIL_SEND_ALLOWLIST: <adresse de test confirmée>
+      MAIL_ALERT_TO: ydiop@5sursync.com
+    secrets: [database_uri, payload_secret, smtp_password, m365_read_key, m365_read_cert, m365_send_key, m365_send_cert]
+secrets:
+  m365_read_key: { file: ./secrets/m365_read_key.pem }
+  m365_send_key: { file: ./secrets/m365_send_key.pem }
+  m365_read_cert: { file: ./deployment/m365/m365-read.cer }
+  m365_send_cert: { file: ./deployment/m365/m365-send.cer }
