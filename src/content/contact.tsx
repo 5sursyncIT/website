@@ -1,22 +1,28 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 import { contactFromCopy } from "@/lib/contact-details";
 import { ContactMap } from "@/components/ContactMap";
 export default function PageContact({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
   const details = contactFromCopy(texts);
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero motion-main compact contact-hero">
-        <HeroVideo
+        <HeroVideo locale={locale}
           poster="/assets/motion/posters/main-contact.jpg"
           sources={[{ src: "/assets/motion/videos/main-contact.mp4", type: "video/mp4" }]}
-          label="Illustration — Contact et accompagnement"
+          label={tr("Illustration — Contact et accompagnement")}
         />
         <div className="container hero-inner">
           <p className="eyebrow">{t("text-0", "Contact")}</p>
@@ -98,23 +104,23 @@ export default function PageContact({
                   <path d="M24 46S8 28 8 18a16 16 0 0 1 32 0c0 10-16 28-16 28Z"></path>
                   <circle cx="24" cy="18" r="5"></circle>
                 </svg>
-                <div><span>Adresse</span><address>{details.address}</address></div>
+                <div><span>{tr("Adresse")}</span><address>{details.address}</address></div>
               </div>
               <div className="aside-services">
                 <h3>{t("text-10", "Nos expertises")}</h3>
-                <a href="/reseaux-cloud">
+                <a href={lp("/reseaux-cloud")}>
                   {t("text-11", "Réseaux & cloud ")}
                   <span aria-hidden="true">{"↗"}</span>
                 </a>
-                <a href="/solutions-metier">
+                <a href={lp("/solutions-metier")}>
                   {t("text-12", "Solutions métier ")}
                   <span aria-hidden="true">{"↗"}</span>
                 </a>
-                <a href="/developpement-api">
+                <a href={lp("/developpement-api")}>
                   {t("text-13", "Développement & API ")}
                   <span aria-hidden="true">{"↗"}</span>
                 </a>
-                <a href="/maintenance-support">
+                <a href={lp("/maintenance-support")}>
                   {t("text-14", "Maintenance et support ")}
                   <span aria-hidden="true">{"↗"}</span>
                 </a>
@@ -122,12 +128,12 @@ export default function PageContact({
             </aside>
             <div>
               <h2>{t("text-15", "Votre message")}</h2>
-              <ContactForm />
+              <ContactForm locale={locale} />
             </div>
           </div>
         </div>
       </section>
-      <ContactMap details={details} texts={texts} />
+      <ContactMap details={details} texts={texts} locale={locale} />
       <section className="section pale">
         <div className="container">
           <p className="eyebrow">

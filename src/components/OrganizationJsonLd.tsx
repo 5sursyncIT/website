@@ -48,7 +48,7 @@ export async function OrganizationJsonLd() {
         "@id": `${siteOrigin}/#site`,
         name: "5/Sync IT",
         url: siteOrigin,
-        inLanguage: "fr",
+        inLanguage: ["fr", "en"],
         publisher: { "@id": id },
       },
     ],

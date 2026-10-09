@@ -131,3 +131,7 @@
 .founder-bio+.founder-bio{margin-top:16px}
 @media(max-width:1100px){.founder-grid{grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:40px}}
 @media(max-width:650px){.founder-grid{grid-template-columns:1fr;gap:26px}.founder-photo{max-width:340px}.founder-role{font-size:17px}}
+/* Language switch (FR/EN), after the Contact button. */
+.site-header nav a.nav-language{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--muted)}
+.site-header nav a.nav-language:hover{color:var(--ink)}
+@media(max-width:650px){.site-header nav a.nav-language{font-size:15px;border-bottom:0;margin-top:6px}}

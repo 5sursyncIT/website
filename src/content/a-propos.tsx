@@ -1,5 +1,7 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 // Founder biography, as revised by Charlie and validated by the owner. Only confirmed facts:
 // no degree, no year, no teaching mention until the owner confirms them.
@@ -10,18 +12,22 @@ const FOUNDER_BIO: string[] = [
   "La formation et la transmission des connaissances occupent une place importante dans sa démarche. Au-delà du déploiement technique, il veille à ce que les équipes puissent s’approprier les outils et les utiliser durablement.",
 ];
 export default function PageAPropos({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero motion-main about-hero  ">
-        <HeroVideo
+        <HeroVideo locale={locale}
           poster="/assets/motion/posters/main-a-propos.jpg"
           sources={[{ src: "/assets/motion/videos/main-a-propos.mp4", type: "video/mp4" }]}
-          label="Illustration — À propos de 5/Sync IT"
+          label={tr("Illustration — À propos de 5/Sync IT")}
         />
         <div className="container hero-inner">
           <p className="eyebrow">{t("text-0", "À propos de 5/Sync IT")}</p>
@@ -36,7 +42,7 @@ export default function PageAPropos({
             <br />
             {t("text-4", " dans leurs projets informatiques.")}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-5", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -92,7 +98,7 @@ export default function PageAPropos({
                 src="/assets/equipe/papa-youssoupha-diop-800.jpg"
                 width={800}
                 height={993}
-                alt="Portrait de Papa Youssoupha Diop, fondateur et gérant de 5/Sync IT"
+                alt={tr("Portrait de Papa Youssoupha Diop, fondateur et gérant de 5/Sync IT")}
                 loading="lazy"
                 decoding="async"
               />
@@ -150,19 +156,19 @@ export default function PageAPropos({
           <p className="eyebrow">{t("text-19", "Nos expertises")}</p>
           <h2>{t("text-20", "Quatre expertises complémentaires.")}</h2>
           <div className="service-links">
-            <a href="/reseaux-cloud">
+            <a href={lp("/reseaux-cloud")}>
               {t("text-21", "Réseaux & cloud")}
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a href="/solutions-metier">
+            <a href={lp("/solutions-metier")}>
               {t("text-22", "Solutions métier")}
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a href="/developpement-api">
+            <a href={lp("/developpement-api")}>
               {t("text-23", "Développement & API")}
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a href="/maintenance-support">
+            <a href={lp("/maintenance-support")}>
               {t("text-24", "Maintenance et support")}
               <span aria-hidden="true">{"↗"}</span>
             </a>
@@ -178,7 +184,7 @@ export default function PageAPropos({
               {t("text-26", " votre prochain projet.")}
             </h2>
           </div>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-27", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

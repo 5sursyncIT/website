@@ -1,19 +1,25 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageDeveloppementApi({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero  development">
-        <HeroVideo poster="/assets/motion/posters/developpement-api.jpg" sources={[{src:"/assets/motion/videos/developpement-api.mp4",type:"video/mp4"}]} label="Illustration — Développement et API" />
+        <HeroVideo locale={locale} poster="/assets/motion/posters/developpement-api.jpg" sources={[{src:"/assets/motion/videos/developpement-api.mp4",type:"video/mp4"}]} label={tr("Illustration — Développement et API")} />
         <div className="container hero-inner">
-          <nav className="breadcrumb" aria-label="Fil d’Ariane">
-            <a href="/services">{t("text-3", "Services")}</a>
+          <nav className="breadcrumb" aria-label={tr("Fil d’Ariane")}>
+            <a href={lp("/services")}>{t("text-3", "Services")}</a>
             <span>{"/"}</span>
             <span>{t("text-4", "Développement & API")}</span>
           </nav>
@@ -30,7 +36,7 @@ export default function PageDeveloppementApi({
             <br />
             {t("text-8", " des solutions conçues autour de votre activité.")}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-9", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -219,7 +225,7 @@ export default function PageDeveloppementApi({
               {t("text-37", "Parlons de vos utilisateurs et de vos besoins.")}
             </p>
           </div>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-38", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

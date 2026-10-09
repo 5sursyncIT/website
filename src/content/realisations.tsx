@@ -6,13 +6,17 @@ import {
   type Project,
 } from "@/lib/showcase";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageRealisations({
+  locale = "fr",
   texts = {},
   projects,
   projectsTitle,
   caseStudies,
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
   projects: Project[];
   projectsTitle: string;
@@ -20,14 +24,16 @@ export default function PageRealisations({
 }) {
   const featured = caseStudies.filter(c=>c.image || c.illustration);
   const historical = caseStudies.filter(c=>!c.image && !c.illustration);
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero motion-main compact ">
-        <HeroVideo
+        <HeroVideo locale={locale}
           poster="/assets/motion/posters/main-realisations.jpg"
           sources={[{ src: "/assets/motion/videos/main-realisations.mp4", type: "video/mp4" }]}
-          label="Illustration — Réalisations et projets"
+          label={tr("Illustration — Réalisations et projets")}
         />
         <div className="container hero-inner">
           <p className="eyebrow">{t("text-0", "Nos réalisations")}</p>
@@ -43,30 +49,30 @@ export default function PageRealisations({
           {t("text-4", "Visuel d’illustration")}
         </span>
       </section>
-      <ProjectsSection projects={projects} title={projectsTitle} />
+      <ProjectsSection projects={projects} title={tr(projectsTitle)} locale={locale} />
       {featured.length > 0 && (
         <section className="section cases">
           <div className="container">
             {featured.map((c, index) => {
               const visual = (
                 <figure>
-                  <CaseVisual study={c} />
+                  <CaseVisual study={c} locale={locale} />
                   {!c.image && (
-                    <figcaption>Illustration du domaine d’intervention</figcaption>
+                    <figcaption>{tr("Illustration du domaine d’intervention")}</figcaption>
                   )}
                 </figure>
               );
               const text = (
                 <div>
-                  {c.category && <p className="eyebrow">{c.category}</p>}
-                  <h2>{c.client}</h2>
+                  {c.category && <p className="eyebrow">{tr(c.category)}</p>}
+                  <h2>{tr(c.client)}</h2>
                   <div className="short-rule"></div>
-                  <h3>{c.project}</h3>
-                  <p>{c.summary}</p>
+                  <h3>{tr(c.project)}</h3>
+                  <p>{tr(c.summary)}</p>
                   {c.tags.length > 0 && (
                     <div className="tags">
                       {c.tags.map((tag) => (
-                        <span key={tag}>{tag}</span>
+                        <span key={tag}>{tr(tag)}</span>
                       ))}
                     </div>
                   )}
@@ -87,12 +93,12 @@ export default function PageRealisations({
         </section>
       )}
       {historical.length > 0 && <section className="section historical-section" id="references-historiques" aria-labelledby="historical-heading"><div className="container">
-        <p className="eyebrow">Références historiques</p>
+        <p className="eyebrow">{tr("Références historiques")}</p>
         <h2 id="historical-heading">{t("historical-heading", "D’autres missions documentées.")}</h2>
         <p className="historical-intro">{t("historical-intro", "Des références publiées sur notre précédent site, replacées dans leur contexte.")}</p>
         <div className="historical-grid">{historical.map(c=><article className="historical-card" id={c.anchor} key={c.id}>
-          {c.category&&<p className="eyebrow">{c.category}</p>}<h3>{c.client}</h3><h4>{c.project}</h4><p>{c.summary}</p>
-          {!!c.tags.length&&<div className="tags">{c.tags.map(tag=><span key={tag}>{tag}</span>)}</div>}
+          {c.category&&<p className="eyebrow">{tr(c.category)}</p>}<h3>{tr(c.client)}</h3><h4>{tr(c.project)}</h4><p>{tr(c.summary)}</p>
+          {!!c.tags.length&&<div className="tags">{c.tags.map(tag=><span key={tag}>{tr(tag)}</span>)}</div>}
         </article>)}</div>
       </div></section>}
       <section className="section pale">
@@ -172,7 +178,7 @@ export default function PageRealisations({
           <div>
             <h2>{t("text-25", "Parlons de votre prochain projet.")}</h2>
           </div>
-          <a className="button navy" href="/contact">
+          <a className="button navy" href={lp("/contact")}>
             {t("text-26", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -182,11 +188,12 @@ export default function PageRealisations({
   );
 }
 
-function CaseVisual({ study }: { study: CaseStudy }) {
+function CaseVisual({ study, locale }: { study: CaseStudy; locale: Locale }) {
+  const tr = (text: string) => translate(locale, text);
   if (study.image)
     return (
       <div className="crop case-photo">
-        <img src={study.image.src} alt={study.image.alt} loading="lazy" />
+        <img src={study.image.src} alt={tr(study.image.alt)} loading="lazy" />
       </div>
     );
   const builtin = builtinIllustrations[study.illustration ?? ""];
@@ -195,7 +202,7 @@ function CaseVisual({ study }: { study: CaseStudy }) {
     <div
       className="crop "
       role="img"
-      aria-label="Illustration du domaine d’intervention"
+      aria-label={tr("Illustration du domaine d’intervention")}
       style={{ aspectRatio: builtin.ratio } as React.CSSProperties}
     >
       <img

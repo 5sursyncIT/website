@@ -19,3 +19,12 @@ export const LEGAL = {
     return `${/keur massar/i.test(street) ? street : `${street}, Keur Massar`}, Dakar, Sénégal`;
   },
 };
+// English renderings of the translatable fields above, for the /en legal pages.
+export const LEGAL_EN = {
+  form: "single-member limited liability company (SUARL)",
+  publisher: "Youssoupha Diop, Manager",
+  updated: "7 October 2026",
+  contactRetention: "three years from our last exchange",
+  hostAddress: "Welfenstraße 22, 81541 Munich, Germany",
+  seat: (address: string) => LEGAL.seat(address).replace(/Sénégal$/, "Senegal"),
+};

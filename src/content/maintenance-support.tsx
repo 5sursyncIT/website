@@ -1,19 +1,25 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageMaintenanceSupport({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero  support">
-        <HeroVideo poster="/assets/motion/posters/maintenance-support.jpg" sources={[{src:"/assets/motion/videos/maintenance-support.mp4",type:"video/mp4"}]} label="Illustration — Maintenance et support" />
+        <HeroVideo locale={locale} poster="/assets/motion/posters/maintenance-support.jpg" sources={[{src:"/assets/motion/videos/maintenance-support.mp4",type:"video/mp4"}]} label={tr("Illustration — Maintenance et support")} />
         <div className="container hero-inner">
-          <nav className="breadcrumb" aria-label="Fil d’Ariane">
-            <a href="/services">{t("text-0", "Services")}</a>
+          <nav className="breadcrumb" aria-label={tr("Fil d’Ariane")}>
+            <a href={lp("/services")}>{t("text-0", "Services")}</a>
             <span>{"/"}</span>
             <span>{t("text-1", "Maintenance et support")}</span>
           </nav>
@@ -30,7 +36,7 @@ export default function PageMaintenanceSupport({
             <br />
             {t("text-5", " organiser les prochaines actions de maintenance.")}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-6", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -167,7 +173,7 @@ export default function PageMaintenanceSupport({
           </div>
         </div>
       </section>
-      <section className="section support-access"><div className="container"><p>{t("support-access-label", "Déjà client ?")} <a href="/support/connexion">{t("support-access-link", "Accéder à votre espace Support")}</a></p></div></section>
+      <section className="section support-access"><div className="container"><p>{t("support-access-label", "Déjà client ?")} <a href={lp("/support/connexion")}>{t("support-access-link", "Accéder à votre espace Support")}</a></p></div></section>
       <section className="cta pale">
         <div className="container cta-inner">
           <div>
@@ -179,7 +185,7 @@ export default function PageMaintenanceSupport({
               )}
             </p>
           </div>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-38", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

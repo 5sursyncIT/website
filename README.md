@@ -4,6 +4,7 @@ Next.js / React / TypeScript, API Node intégrée, Payload CMS et PostgreSQL pri
 déployés sur le VPS Ubuntu imposé avec Docker Compose et Nginx. Neuf pages de la
 maquette converties et espace Support client avec invitations/tickets/fichiers privés.
 
+Version anglaise sous /en : [documentation/anglais.md](documentation/anglais.md).
 CRM clients interne sur /crm (admins) : [documentation/crm.md](documentation/crm.md).
 Boîte partagée Microsoft 365 contact@ dans le CRM : [documentation/microsoft365.md](documentation/microsoft365.md).
 Préproduction isolée (base, secret et volumes propres) : migrations à lancer sur les deux bases.

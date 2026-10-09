@@ -4,23 +4,29 @@ import { CatalogueSection } from "@/components/CatalogueSection";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import type { Project } from "@/lib/showcase";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate, translateTexts } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageHome({
+  locale = "fr",
   texts = {},
   catalogueTexts,
   projects,
   projectsTitle,
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
   catalogueTexts: Record<string,string>;
   projects: Project[];
   projectsTitle: string;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero  home">
-        <HeroVideo poster="/assets/motion/posters/accueil.jpg" sources={[{src:"/assets/motion/videos/accueil.mp4",type:"video/mp4"}]} label="Illustration — Écosystème numérique" />
+        <HeroVideo locale={locale} poster="/assets/motion/posters/accueil.jpg" sources={[{src:"/assets/motion/videos/accueil.mp4",type:"video/mp4"}]} label={tr("Illustration — Écosystème numérique")} />
         <div className="container hero-inner">
           <p className="eyebrow">
             {t("text-0", "Informatique pour les entreprises • Dakar")}
@@ -41,7 +47,7 @@ export default function PageHome({
               " Une expertise technique au service de votre activité.",
             )}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-6", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -55,7 +61,7 @@ export default function PageHome({
           <p className="eyebrow">{t("text-8", "01 / Expertises")}</p>
           <h2>{t("text-9", "Une expertise, quatre leviers.")}</h2>
           <div className="service-grid ">
-            <a className="service-item" href="/reseaux-cloud">
+            <a className="service-item" href={lp("/reseaux-cloud")}>
               <span className="number">{"01"}</span>
               <div>
                 <h3>{t("text-10", "Réseaux & cloud")}</h3>
@@ -65,7 +71,7 @@ export default function PageHome({
               </div>
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a className="service-item" href="/solutions-metier">
+            <a className="service-item" href={lp("/solutions-metier")}>
               <span className="number">{"02"}</span>
               <div>
                 <h3>{t("text-12", "Solutions métier")}</h3>
@@ -73,7 +79,7 @@ export default function PageHome({
               </div>
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a className="service-item" href="/developpement-api">
+            <a className="service-item" href={lp("/developpement-api")}>
               <span className="number">{"03"}</span>
               <div>
                 <h3>{t("text-14", "Développement & API")}</h3>
@@ -81,7 +87,7 @@ export default function PageHome({
               </div>
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a className="service-item" href="/maintenance-support">
+            <a className="service-item" href={lp("/maintenance-support")}>
               <span className="number">{"04"}</span>
               <div>
                 <h3>{t("text-16", "Maintenance et support")}</h3>
@@ -94,13 +100,13 @@ export default function PageHome({
           </div>
         </div>
       </section>
-      <CatalogueSection texts={catalogueTexts} overview />
+      <CatalogueSection texts={catalogueTexts} overview locale={locale} />
       <section className="section pale">
         <div className="container">
           <p className="eyebrow">{t("text-18", "02 / Réalisations")}</p>
           <h2>{t("text-19", "Du besoin à la solution.")}</h2>
           <div className="project-list">
-            <a href="/realisations#groupe-hage">
+            <a href={lp("/realisations#groupe-hage")}>
               <span className="project-category">
                 {t("text-20", "Infrastructure")}
               </span>
@@ -108,7 +114,7 @@ export default function PageHome({
               <span>{t("text-22", "Réseau Wi-Fi")}</span>
               <span aria-hidden="true">{"↗"}</span>
             </a>
-            <a href="/realisations#harmattan">
+            <a href={lp("/realisations#harmattan")}>
               <span className="project-category">{t("text-23", "Web")}</span>
               <h3>{t("text-24", "Harmattan Sénégal")}</h3>
               <span>{t("text-25", "Site vitrine")}</span>
@@ -117,8 +123,8 @@ export default function PageHome({
           </div>
         </div>
       </section>
-      <ProjectsSection projects={projects} title={projectsTitle} overview />
-      <AfricaInterventions texts={texts} />
+      <ProjectsSection projects={projects} title={tr(projectsTitle)} overview locale={locale} />
+      <AfricaInterventions texts={translateTexts(locale, texts)} locale={locale} />
       <section className="cta">
         <div className="container cta-inner">
           <div>
@@ -129,7 +135,7 @@ export default function PageHome({
               {t("text-28", " commence ici.")}
             </h2>
           </div>
-          <a className="button navy" href="/contact">
+          <a className="button navy" href={lp("/contact")}>
             {t("text-29", "Prendre contact ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

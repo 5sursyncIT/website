@@ -1,19 +1,25 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageServices({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero motion-main  services-hero">
-        <HeroVideo
+        <HeroVideo locale={locale}
           poster="/assets/motion/posters/main-services.jpg"
           sources={[{ src: "/assets/motion/videos/main-services.mp4", type: "video/mp4" }]}
-          label="Illustration — Services et expertises"
+          label={tr("Illustration — Services et expertises")}
         />
         <div className="container hero-inner">
           <p className="eyebrow">{t("text-0", "Nos services")}</p>
@@ -33,7 +39,7 @@ export default function PageServices({
               " structurer vos outils et accompagner votre activité.",
             )}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-6", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -47,7 +53,7 @@ export default function PageServices({
           <p className="eyebrow">{t("text-8", "Nos services")}</p>
           <h2>{t("text-9", "De l’infrastructure aux usages.")}</h2>
           <div className="service-grid cards">
-            <a className="service-item" href="/reseaux-cloud">
+            <a className="service-item" href={lp("/reseaux-cloud")}>
               <span className="number">{"01"}</span>
               <svg
                 className="icon"
@@ -77,7 +83,7 @@ export default function PageServices({
                 <span aria-hidden="true">{"↗"}</span>
               </span>
             </a>
-            <a className="service-item" href="/solutions-metier">
+            <a className="service-item" href={lp("/solutions-metier")}>
               <span className="number">{"02"}</span>
               <svg
                 className="icon"
@@ -109,7 +115,7 @@ export default function PageServices({
                 <span aria-hidden="true">{"↗"}</span>
               </span>
             </a>
-            <a className="service-item" href="/developpement-api">
+            <a className="service-item" href={lp("/developpement-api")}>
               <span className="number">{"03"}</span>
               <svg
                 className="icon"
@@ -138,7 +144,7 @@ export default function PageServices({
                 <span aria-hidden="true">{"↗"}</span>
               </span>
             </a>
-            <a className="service-item" href="/maintenance-support">
+            <a className="service-item" href={lp("/maintenance-support")}>
               <span className="number">{"04"}</span>
               <svg
                 className="icon"
@@ -214,7 +220,7 @@ export default function PageServices({
           <div>
             <h2>{t("text-42", "Quel est votre prochain besoin ?")}</h2>
           </div>
-          <a className="button navy" href="/contact">
+          <a className="button navy" href={lp("/contact")}>
             {t("text-43", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

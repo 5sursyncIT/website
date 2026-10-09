@@ -1,20 +1,26 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import { CatalogueSection } from "@/components/CatalogueSection";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageSolutionsMetier({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero  business">
-        <HeroVideo poster="/assets/motion/posters/solutions-metier.jpg" sources={[{src:"/assets/motion/videos/solutions-metier.mp4",type:"video/mp4"}]} label="Illustration — Solutions métier" />
+        <HeroVideo locale={locale} poster="/assets/motion/posters/solutions-metier.jpg" sources={[{src:"/assets/motion/videos/solutions-metier.mp4",type:"video/mp4"}]} label={tr("Illustration — Solutions métier")} />
         <div className="container hero-inner">
-          <nav className="breadcrumb" aria-label="Fil d’Ariane">
-            <a href="/services">{t("text-4", "Services")}</a>
+          <nav className="breadcrumb" aria-label={tr("Fil d’Ariane")}>
+            <a href={lp("/services")}>{t("text-4", "Services")}</a>
             <span>{"/"}</span>
             <span>{t("text-5", "Solutions métier")}</span>
           </nav>
@@ -28,7 +34,7 @@ export default function PageSolutionsMetier({
             <br />
             {t("text-9", " préparer le déploiement et accompagner les usages.")}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-10", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -37,7 +43,7 @@ export default function PageSolutionsMetier({
           {t("text-11", "Schéma d’illustration")}
         </span>
       </section>
-      <CatalogueSection texts={texts} />
+      <CatalogueSection texts={texts} locale={locale} />
       <section className="section ">
         <div className="container">
           <p className="eyebrow">{t("text-12", "01 / Périmètre")}</p>
@@ -213,7 +219,7 @@ export default function PageSolutionsMetier({
               )}
             </p>
           </div>
-          <a className="button navy" href="/contact">
+          <a className="button navy" href={lp("/contact")}>
             {t("text-43", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>

@@ -7,9 +7,15 @@ export type HeroVideoProps = {
   sources: readonly Source[];
   label: string;
   className?: string;
+  locale?: 'fr' | 'en';
 };
 /** Progressive hero: static poster first, opt-in playback on mobile. */
-export function HeroVideo({ poster, sources, label, className = '' }: HeroVideoProps) {
+const controls = {
+  fr: { play: 'Lire l’animation', playLabel: 'Lire l’animation d’illustration', pause: 'Pause', pauseLabel: 'Mettre l’animation en pause' },
+  en: { play: 'Play animation', playLabel: 'Play the illustration animation', pause: 'Pause', pauseLabel: 'Pause the animation' },
+};
+export function HeroVideo({ poster, sources, label, className = '', locale = 'fr' }: HeroVideoProps) {
+  const copy = controls[locale];
   const container = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const [desktop, setDesktop] = useState(false);
@@ -66,8 +72,8 @@ export function HeroVideo({ poster, sources, label, className = '' }: HeroVideoP
     </video>}
     <figcaption className="hero-motion__label">{label}</figcaption>
     {!reduced && !failed && <button className="hero-motion__toggle" type="button" onClick={toggle}
-      aria-label={(!desktop && !optIn) || paused ? 'Lire l’animation d’illustration' : 'Mettre l’animation en pause'}>
-      {(!desktop && !optIn) || paused ? 'Lire l’animation' : 'Pause'}
+      aria-label={(!desktop && !optIn) || paused ? copy.playLabel : copy.pauseLabel}>
+      {(!desktop && !optIn) || paused ? copy.play : copy.pause}
     </button>}
   </figure>;
 }

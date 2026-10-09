@@ -2,9 +2,16 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { localeOf, localePath, switchPath } from "@/lib/locale";
+const nav = {
+  fr: [["/services", "Services"], ["/realisations", "Réalisations"], ["/a-propos", "À propos"], ["/support", "Support"], ["/contact", "Contact"]],
+  en: [["/services", "Services"], ["/realisations", "Projects"], ["/a-propos", "About"], ["/support", "Support"], ["/contact", "Contact"]],
+};
 export function Header() {
   const [open, setOpen] = useState(false);
   const path = usePathname();
+  const locale = localeOf(path);
+  const en = locale === "en";
   useEffect(() => {
     setOpen(false);
   }, [path]);
@@ -18,7 +25,7 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="container header-inner">
-        <Link href="/" className="brand" aria-label="5/Sync IT — Accueil">
+        <Link href={localePath(locale, "/")} className="brand" aria-label={en ? "5/Sync IT — Home" : "5/Sync IT — Accueil"}>
           <img
             src="/assets/logo-horizontal.jpeg"
             width="1012"
@@ -37,24 +44,31 @@ export function Header() {
         <nav
           id="navigation"
           className={open ? "is-open" : ""}
-          aria-label="Navigation principale"
+          aria-label={en ? "Main navigation" : "Navigation principale"}
         >
-          {[
-            ["/services", "Services"],
-            ["/realisations", "Réalisations"],
-            ["/a-propos", "À propos"],
-            ["/support", "Support"],
-            ["/contact", "Contact"],
-          ].map(([href, label]) => (
-            <Link
-              key={href}
-              href={href}
-              aria-current={path === href ? "page" : undefined}
-              className={href === "/contact" ? "nav-contact" : ""}
-            >
-              {label}
-            </Link>
-          ))}
+          {nav[locale].map(([page, label]) => {
+            const href = localePath(locale, page);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={path === href ? "page" : undefined}
+                className={page === "/contact" ? "nav-contact" : ""}
+              >
+                {label}
+              </Link>
+            );
+          })}
+          {/* Each language has its own root layout (html lang), so this is a full page load. */}
+          <a
+            className="nav-language"
+            href={switchPath(path)}
+            hrefLang={en ? "fr" : "en"}
+            lang={en ? "fr" : "en"}
+            aria-label={en ? "Français (FR)" : "English (EN)"}
+          >
+            {en ? "FR" : "EN"}
+          </a>
         </nav>
       </div>
     </header>

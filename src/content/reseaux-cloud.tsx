@@ -1,19 +1,25 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
+import { type Locale, localePath } from "@/lib/locale";
+import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 export default function PageReseauxCloud({
+  locale = "fr",
   texts = {},
 }: {
+  locale?: Locale;
   texts?: Record<string, string>;
 }) {
-  const t = (key: string, fallback: string) => texts[key] ?? fallback;
+  const tr = (text: string) => translate(locale, text);
+  const lp = (path: string) => localePath(locale, path);
+  const t = (key: string, fallback: string) => tr(texts[key] ?? fallback);
   return (
     <main id="contenu">
       <section className="hero dark motion-hero  network">
-        <HeroVideo poster="/assets/motion/posters/reseaux-cloud.jpg" sources={[{src:"/assets/motion/videos/reseaux-cloud.mp4",type:"video/mp4"}]} label="Illustration — Réseaux et cloud" />
+        <HeroVideo locale={locale} poster="/assets/motion/posters/reseaux-cloud.jpg" sources={[{src:"/assets/motion/videos/reseaux-cloud.mp4",type:"video/mp4"}]} label={tr("Illustration — Réseaux et cloud")} />
         <div className="container hero-inner">
-          <nav className="breadcrumb" aria-label="Fil d’Ariane">
-            <a href="/services">{t("text-0", "Services")}</a>
+          <nav className="breadcrumb" aria-label={tr("Fil d’Ariane")}>
+            <a href={lp("/services")}>{t("text-0", "Services")}</a>
             <span>{"/"}</span>
             <span>{t("text-1", "Réseaux & cloud")}</span>
           </nav>
@@ -27,7 +33,7 @@ export default function PageReseauxCloud({
             <br />
             {t("text-5", " pensée pour vos usages et votre organisation.")}
           </p>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-6", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -183,7 +189,7 @@ export default function PageReseauxCloud({
               <p className="eyebrow">{t("text-28", "Réalisation")}</p>
               <h2>{t("text-29", "Groupe Hage")}</h2>
               <p>{t("text-30", "Réseau Wi-Fi")}</p>
-              <a className="text-link" href="/realisations#groupe-hage">
+              <a className="text-link" href={lp("/realisations#groupe-hage")}>
                 {t("text-31", "Voir le projet ")}
                 <span aria-hidden="true">{"↗"}</span>
               </a>
@@ -192,7 +198,7 @@ export default function PageReseauxCloud({
               <div
                 className="crop "
                 role="img"
-                aria-label="Illustration du domaine d’intervention"
+                aria-label={tr("Illustration du domaine d’intervention")}
                 style={{ aspectRatio: "481/130" } as React.CSSProperties}
               >
                 <img
@@ -255,7 +261,7 @@ export default function PageReseauxCloud({
               )}
             </p>
           </div>
-          <a className="button aqua" href="/contact">
+          <a className="button aqua" href={lp("/contact")}>
             {t("text-41", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
