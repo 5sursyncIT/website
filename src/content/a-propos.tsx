@@ -1,6 +1,14 @@
 import { HeroVideo } from "@/components/HeroVideo";
 import type React from "react";
 import { ContactForm } from "@/components/ContactForm";
+// Founder biography, as revised by Charlie and validated by the owner. Only confirmed facts:
+// no degree, no year, no teaching mention until the owner confirms them.
+const FOUNDER_BIO: string[] = [
+  "Consultant et chef de projet, Papa Youssoupha DIOP accompagne les entreprises et les institutions dans la conception et la mise en œuvre de leurs projets informatiques. À la tête de 5/Sync IT, basée à Dakar, il associe expertise technique et connaissance du terrain pour proposer des solutions adaptées aux besoins et aux moyens de chaque organisation.",
+  "Son expérience couvre les infrastructures réseau et systèmes, la virtualisation, la sécurité informatique et le développement d’applications métier. Il intervient également dans des projets de gestion documentaire, de numérisation et de valorisation des archives, avec une attention particulière à la fiabilité des équipements et à la continuité des services.",
+  "Ses missions l’ont conduit à accompagner des organisations au Sénégal et dans plusieurs pays africains, notamment en Guinée, en Côte d’Ivoire et en République démocratique du Congo. Il travaille aussi bien avec des entreprises privées qu’avec des collectivités et des institutions publiques.",
+  "La formation et la transmission des connaissances occupent une place importante dans sa démarche. Au-delà du déploiement technique, il veille à ce que les équipes puissent s’approprier les outils et les utiliser durablement.",
+];
 export default function PageAPropos({
   texts = {},
 }: {
@@ -68,6 +76,36 @@ export default function PageAPropos({
                 )}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+      <section className="section founder" aria-labelledby="fondateur">
+        <div className="container founder-grid">
+          <figure className="founder-photo">
+            <picture>
+              <source
+                type="image/webp"
+                srcSet="/assets/equipe/papa-youssoupha-diop-480.webp 480w, /assets/equipe/papa-youssoupha-diop-800.webp 800w"
+                sizes="(max-width: 650px) calc(100vw - 40px), 380px"
+              />
+              <img
+                src="/assets/equipe/papa-youssoupha-diop-800.jpg"
+                width={800}
+                height={993}
+                alt="Portrait de Papa Youssoupha Diop, fondateur et gérant de 5/Sync IT"
+                loading="lazy"
+                decoding="async"
+              />
+            </picture>
+          </figure>
+          <div>
+            <p className="eyebrow">{t("founder-eyebrow", "Le fondateur")}</p>
+            <h2 id="fondateur">{t("founder-name", "Papa Youssoupha DIOP")}</h2>
+            <p className="founder-role">{t("founder-role", "Fondateur et gérant de 5/Sync IT")}</p>
+            <div className="short-rule"></div>
+            {FOUNDER_BIO.map((paragraph, i) => (
+              <p key={i} className="founder-bio">{t(`founder-bio-${i + 1}`, paragraph)}</p>
+            ))}
           </div>
         </div>
       </section>

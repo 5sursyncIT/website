@@ -51,6 +51,14 @@ export const builtinIllustrations: Record<
     },
   },
 };
+// Screenshots of delivered sites, keyed by case-study anchor. An image uploaded in
+// the CMS still takes precedence.
+export const builtinCaseImages: Record<string, { src: string; alt: string }> = {
+  harmattan: {
+    src: "/assets/realisations/harmattan-senegal.png",
+    alt: "Capture d’écran de la page d’accueil du site L’Harmattan Sénégal",
+  },
+};
 export const builtinIllustrationOptions = [
   { label: "Illustration infrastructure (maquette)", value: "infrastructure" },
   { label: "Illustration web (maquette)", value: "web" },
@@ -139,6 +147,7 @@ const fallbackProjects = projectSeeds.map((p) => toProject({ ...p, id: p.key }))
 const fallbackCaseStudies: CaseStudy[] = [...caseStudySeeds, ...historicalCases].map((c) => ({
   ...c,
   id: c.anchor,
+  image: builtinCaseImages[c.anchor],
 }));
 async function payload() {
   const { getPayload } = await import("payload");
@@ -192,7 +201,7 @@ export async function caseStudies(): Promise<CaseStudy[]> {
           project: c.project,
           summary: c.summary,
           tags: (c.tags || []).map((t) => t.label),
-          image: mediaURL(c.image),
+          image: mediaURL(c.image) ?? builtinCaseImages[c.anchor],
           illustration: c.illustration || undefined,
         }));
       },

@@ -1,6 +1,6 @@
 services:
   app-production:
-    image: 5sursync:whatsapp-20261008
+    image: 5sursync:about-founder-20261009
     build:
       context: .
       args:
