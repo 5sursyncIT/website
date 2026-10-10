@@ -9,7 +9,7 @@ https://claude.ai/code/artifact/aa0c4bd2-3711-466c-adbe-dd1c678840f6
 ## Accès
 
 - Adresse : `https://5sursync.com/crm` (et `https://preprod.5sursync.com/crm`), ou le
-  lien « Ouvrir le CRM → » du tableau de bord `/admin`.
+  lien « Ouvrir le CRM → » du tableau de bord `/admin` et encart « CRM clients → » en tête de la navigation admin.
 - Session : celle de l’administration (cookie `payload-token`, durée 1 h). Un visiteur
   anonyme est redirigé vers `/admin/login?redirect=/crm`. Un compte client connecté
   reçoit une 404.
@@ -24,7 +24,7 @@ https://claude.ai/code/artifact/aa0c4bd2-3711-466c-adbe-dd1c678840f6
 
 | Page | Contenu |
 |---|---|
-| `/crm` | Indicateurs : clients actifs, prospects, pipeline ouvert et pondéré, gains et pertes du mois, tâches en retard ou du jour. Barres du pipeline par étape, prochaines clôtures, tâches, demandes du site non converties, dernières activités. |
+| `/crm` | « Aujourd’hui » (depuis le 10/10, voir « Suivi commercial ») puis indicateurs : clients actifs, prospects, pipeline ouvert et pondéré, gains et pertes du mois, tâches en retard ou du jour. Barres du pipeline par étape, prochaines clôtures, tâches, demandes du site non converties, dernières activités. |
 | `/crm/clients` | Entreprises : recherche (nom, email, ville, secteur, téléphone), filtre par statut, tri, pagination par 25, export CSV. |
 | `/crm/clients/[id]` | Fiche : chiffres clés, bouton « Ouvrir WhatsApp », activités (à faire et historique), opportunités, contacts, résumé Support (utilisateurs et 5 derniers tickets, liens vers l’admin), modification, suppression. |
 | `/crm/opportunites` | Pipeline en 4 colonnes (Piste, Qualifiée, Proposition envoyée, Négociation), changement d’étape sur chaque carte, filtre par responsable, vue « Gagnées et perdues », création, export CSV. |
@@ -34,12 +34,12 @@ https://claude.ai/code/artifact/aa0c4bd2-3711-466c-adbe-dd1c678840f6
 | `/crm/demandes` | Demandes reçues par le formulaire Contact. « Convertir » crée le prospect (ou rattache la demande à une entreprise existante, proposée automatiquement si le nom est identique), son contact, une activité contenant le message et, si la case est cochée, une opportunité « Piste ». La demande d’origine n’est pas modifiée. |
 | `/crm/documents` | Devis et factures : liste avec recherche, filtres par type et statut, montant restant à encaisser, export CSV. |
 | `/crm/documents/nouveau`, `/crm/documents/[id]` | Création en brouillon (lignes : désignation, quantité, unité, prix HT ; TVA 18 % par défaut), suivi des statuts, conversion d’un devis en facture. |
-| `/crm/documents/[id]/apercu` | Feuille A4 imprimable (logo, coordonnées, RCCM, NINEA, client, lignes, totaux HT/TVA/TTC, conditions). L’impression du navigateur produit le PDF. |
+| `/crm/documents/[id]/apercu` | Feuille A4 imprimable (logo, coordonnées, RCCM, NINEA, client, lignes, totaux HT/TVA/TTC, conditions), à la charte du site (voir « Modèles de devis et de facture »). L’impression du navigateur produit le PDF. |
 | `/crm/activites/[id]` | Modification d’une activité (type, objet, contact, échéance, assignation, rappel, terminée) et état de son rappel email. |
 | `/crm/recherche` | Recherche globale (entreprises, contacts, opportunités, devis et factures), aussi accessible depuis le champ du menu. |
 | `/crm/export/clients`, `/contacts`, `/opportunites`, `/documents` | CSV séparé par des `;` avec BOM UTF-8 (ouverture directe dans Excel en français). Les cellules commençant par `= + - @` sont préfixées d’une apostrophe pour neutraliser les formules. Réponse `no-store`. |
 
-Règles métier (hooks des collections, donc aussi appliquées depuis `/admin`) :
+Règles métier (hooks des collections, donc appliquées à toute écriture, y compris par l’API) :
 - une opportunité passée à « Gagnée » transforme un prospect en client ;
 - « Gagnée » met la probabilité à 100 %, « Perdue » à 0 % ; la date de conclusion est
   posée à la clôture et effacée si l’opportunité est rouverte ; à la création, la
@@ -81,7 +81,7 @@ Une entreprise du CRM est la même fiche que le « Client » du Support (collect
 secteur, NINEA/RCCM, email, téléphone, site web, adresse, ville, pays, notes.
 Les entreprises déjà présentes reçoivent le statut « Client ».
 
-Nouvelles collections (groupe « CRM » dans `/admin`, admins seuls) :
+Nouvelles collections (admins seuls ; masquées de `/admin` depuis le 2026-10-09 : `admin.hidden`, gestion uniquement par `/crm`) :
 `crm-contacts`, `crm-deals` (opportunités), `crm-activities` (activités et tâches,
 avec lien éventuel vers la demande de contact convertie), `crm-documents` (devis et
 factures, v2).
@@ -174,7 +174,8 @@ sauvegarde.
 - **Acomptes** : depuis un devis envoyé ou accepté, « Créer la facture d’acompte » (pourcentage de 1 à 99) produit une facture `invoiceType = deposit` avec une ligne par taux de TVA du devis. La facture de solde reprend les lignes du devis et ajoute une ligne négative par ligne de chaque acompte émis. Elle est refusée tant qu’un acompte est encore en brouillon. Un seul solde par devis.
 - **Paiements partiels** : tableau `payments` (date, montant TTC, mode et référence) sur une facture émise. `amountPaid` et `balance` (reste dû = total − paiements − avoirs émis) sont recalculés côté serveur. Le statut passe seul à « Soldée » quand le reste dû atteint 0, et revient à « Émise » si un paiement est supprimé. Les trop-perçus sont refusés. Une facture payée ou créditée ne s’annule plus : il faut passer par un avoir.
 - **TVA par ligne** : chaque ligne a son taux (taux du document par défaut, 0 pour une ligne exonérée). La TVA est calculée et arrondie par taux, puis détaillée sur la fiche, l’aperçu et le PDF. Les prix négatifs ne sont admis que sur une facture (déductions).
-- **PDF côté serveur** (`src/lib/crm-pdf.ts`, `pdf-lib` 1.17.1, polices standard Helvetica et jeu de caractères WinAnsi ; tout caractère hors de ce jeu est remplacé par « ? ») : `/crm/documents/[id]/pdf`, multipage avec en-tête de tableau répété, pied de page légal et numéro de page, mention BROUILLON en filigrane. Contrôlé visuellement : `documentation/qa/crm-v3/crm-pdf-page*.png`.
+- **Modèles de devis et de facture** (2026-10-10) : l’aperçu HTML (`crm.css`, classes `.crm-sheet*`) et le PDF serveur reprennent la charte du site public (`globals.css`) : marine `#092234`, aqua `#2ee9d8`, sarcelle `#00b9b4`, encre `#080d24`, gris-bleu `#4a6482`, fond pâle `#eaf7fc`, Arial/Helvetica, angles droits. Composition commune : bandeau marine à liseré aqua en haut de page ; logo transparent ; surtitre en capitales espacées précédé d’un carré aqua (« Facture », « Devis », « Avoir »…), numéro en grand titre et court filet aqua ; bandeau pâle Date / Échéance ou Validité / Facture d’origine / Montant TTC ou Reste à payer ; colonnes Émetteur et Destinataire (filet sarcelle) ; Objet ; tableau à en-tête marine et numéros de ligne « 01, 02 » en gris clair ; conditions à gauche des totaux ; Total TTC en bloc marine (montant aqua), Reste à payer en bloc aqua ; cadre « Bon pour accord » des devis ; pied légal avec carré aqua et numéro de page. Le cadre de signature n’apparaît plus sur l’aperçu d’un avoir (aligné sur le PDF). Aucune donnée nouvelle n’est affichée (pas de coordonnées bancaires : non fournies).
+- **PDF côté serveur** (`src/lib/crm-pdf.ts`, `pdf-lib` 1.17.1, polices standard Helvetica et jeu de caractères WinAnsi ; tout caractère hors de ce jeu est remplacé par « ? ») : `/crm/documents/[id]/pdf`, multipage avec en-tête de tableau répété, pied de page légal et numéro de page, mention BROUILLON en filigrane. Contrôlé visuellement : `documentation/qa/devis-factures-design/` (modèles actuels ; anciens rendus dans `documentation/qa/crm-v3/`).
 - **Envoi par email** (`src/lib/crm-document-mail.ts`) : document numéroté seulement, depuis `no-reply@5sursync.com`, PDF en pièce jointe. Les réponses vont à l’administrateur expéditeur (Reply-To) et il reçoit une copie cachée. Registre `app_crm_document_mails` : `accepted`, `failed` ou `uncertain` selon la réponse réelle de SMTP ; un envoi resté `dispatching` plus de 5 minutes s’affiche « incertain ». Pas de renvoi automatique ; chaque clic envoie un nouvel email. Une activité « Email » est ajoutée à l’entreprise quand l’envoi est accepté.
 - **Un seul interrupteur pour tous les emails du CRM** (rappels et documents) : `CRM_EMAIL_ENABLED=true`, en plus de `APP_ORIGIN=https://5sursync.com` et `SMTP_ENABLED=true`. Il remplace `CRM_REMINDERS_ENABLED`, qui n’avait jamais été déployé.
 - **nodemailer 9.1.1 → 10.0.16** : la version précédente était touchée par des avis de sécurité (GHSA-v53p-9fqp-m79j et GHSA-prgh-xp8r-p3m5, déni de service par l’analyse des adresses ; GHSA-g57g-f23g-4646, enveloppe malformée ; GHSA-6vj9-mwq6-2f5v). Le seul changement incompatible de la version 10 est « Node.js 20 minimum » (nous sommes en Node 22). `npm audit --omit=dev` : 0 vulnérabilité. Testé contre un serveur SMTP local jetable (pièce jointe PDF, copie cachée non transmise dans les en-têtes). Ce même module envoie les notifications de contact en production.
@@ -240,3 +241,95 @@ Tests : `tests/whatsapp.test.ts` (7 tests : formats internationaux, local séné
 
 ## Messagerie contact@ (Microsoft 365) — 8 octobre 2026
 Menu « Messagerie contact@ » et carte « Emails contact@ » sur les fiches entreprise et contact : échanges reçus et envoyés de la boîte partagée (y compris depuis Outlook), file « À attribuer », brouillons et réponses dans le fil, envoi explicite réservé au droit « envoi ». Droit par administrateur (`mailAccess` : aucun, lecture, brouillons, envoi). Configuration Microsoft, droits, synchronisation, diagnostic, reprise, fonctions pour Charlie et tests : `documentation/microsoft365.md`. Production : non activée tant que les étapes Microsoft ne sont pas faites.
+**9 octobre 2026 : nouvelle orientation** — la messagerie du CRM passe par la boîte Simafri `contact@crm.5sursync.com` en SMTP/IMAP (Microsoft bloque la livraison sortante, 550 5.7.708). Mêmes pages, droits et règles ; pièces jointes à l'envoi ; un seul fournisseur actif (`MAIL_PROVIDER`). Détails, paramètres, saisie du mot de passe, tests et retour arrière : `documentation/messagerie-simafri.md`. Non activée.
+
+## Suivi commercial, accueil « Aujourd’hui » et relances (10 octobre 2026)
+
+Demande du propriétaire : faire du CRM l’outil de travail quotidien (lui et son assistante),
+en commençant par l’accueil du jour, les étapes commerciales et les relances manuelles.
+Choix validés : étapes portées par l’**entreprise** (pas par les opportunités), étape
+« Contacté, sans réponse » ajoutée, **prochaine action obligatoire** tant que l’entreprise
+est en cours. Aucun envoi automatique : les échanges restent faits par l’équipe ; Dolibarr
+n’est pas concerné.
+
+Étapes (`clients.pipeline`) : À contacter → Contacté, sans réponse → Échange engagé →
+Besoin identifié → Rendez-vous → Devis envoyé, plus « En attente (budget) » ; Gagné et
+Perdu ferment le suivi. Raisons de perte (liste) : pas de budget, pas de besoin,
+concurrent retenu, prix, aucune réponse, projet abandonné ou reporté, autre.
+
+Règles (hook `clientPipelineHook`, donc aussi via l’API) : date de changement d’étape
+(`pipeline_at`) ; « Gagné » fait passer un prospect en client ; « Perdu » exige une raison,
+effacée si l’entreprise est rouverte. Automatismes : opportunité gagnée ou devis accepté →
+« Gagné » ; devis envoyé → « Devis envoyé » (seulement depuis une étape antérieure ou
+« En attente ») ; demande du site convertie → « Échange engagé » et action « Répondre à la
+demande de … » due immédiatement, assignée à la personne qui convertit.
+
+Pages :
+- `/crm` « Aujourd’hui » : actions du jour et en retard (type, objet, entreprise, étape,
+  date, responsable, bouton « Fait → noter la suite »), nouvelles demandes du site non
+  converties, tickets Support ouverts ou en cours (plus ancien d’abord, signalés après 24 h
+  sans mise à jour), entreprises en cours sans prochaine action (les plus avancées d’abord,
+  planification en une ligne : type, date, responsable). Vue « Toute l’équipe » ou « Mes
+  actions ». Les anciens indicateurs suivent, avec un graphique par étape commerciale.
+- `/crm/suivi` : tableau par étape (4 + 3 colonnes sur ordinateur, défilement sur mobile),
+  carte = entreprise, prochaine action (en rouge si en retard ou absente), responsable ;
+  glisser-déposer souris, doigt ou clavier, et liste + OK ; zones Gagné / Perdu (Perdu
+  renvoie à la fiche pour la raison) ; filtres responsable, recherche, « sans prochaine
+  action » ; 40 cartes par colonne, le reste via la liste des entreprises.
+- Fiche entreprise : bloc « Suivi commercial » en tête (étape et depuis quand, prochaine
+  action) et formulaire en trois parties : ce qui s’est passé (action prévue terminée ou
+  nouvel échange, résumé, interlocuteur, détails), étape, prochaine action (type, objet,
+  date, responsable ; par défaut demain 9 h et le responsable de l’entreprise). Sans date,
+  le formulaire est refusé tant que l’entreprise est en cours et n’a pas d’autre action
+  prévue. Le compte rendu d’une action terminée est ajouté à ses détails. Un premier
+  échange fait passer « À contacter » à « Contacté, sans réponse » si aucune autre étape
+  n’est choisie.
+- « Marquer comme faite » sur la dernière action prévue d’une entreprise en cours ouvre sa
+  fiche avec la demande de planifier la suite.
+- Liste des entreprises : filtre par étape (ou « en cours »), colonnes Étape et Prochaine
+  action. Export CSV : trois colonnes ajoutées à la fin (étape, raison de perte, prochaine
+  action) ; l’import CSV les ignore (l’étape suit les échanges).
+- Nouveau type d’activité « WhatsApp » (note d’un échange fait dans WhatsApp ; rien n’est lu
+  ni envoyé).
+
+Migration `20261010_020200_crm_suivi` (additive) : colonnes `pipeline`, `lost_reason`,
+`pipeline_at` sur `clients`, index, valeur `whatsapp` de l’enum des activités. Classement
+initial : clients et anciens clients → Gagné ; prospects issus d’une demande du site →
+Échange engagé ; prospects ayant un appel, email ou rendez-vous terminé → Contacté, sans
+réponse (les 27 prospectés le 8/10) ; les autres → À contacter. Aucune prochaine action
+n’est créée par la migration : toutes les entreprises en cours apparaissent donc d’abord
+dans « sans prochaine action » de l’accueil. `down` testé : retire les colonnes, les
+activités WhatsApp deviennent des notes.
+
+Correctif lié : la suppression d’une entreprise supprime ses enfants un par un. La
+suppression groupée de Payload rangeait un échec dans son résultat sans erreur, ce qui
+donnait ensuite une erreur de clé étrangère. Cela s’est produit une fois sur le banc, sans
+qu’on ait pu le reproduire ensuite : la cause exacte n’est pas identifiée.
+
+Tests : voir ETAT.md, section du 10 octobre.
+
+## Profils du back-office (10 octobre 2026)
+
+Champ « Profil » (`admins.role`) sur chaque compte de l’équipe, choisi par un administrateur
+complet qui gère les comptes (jamais sur son propre compte) :
+
+| Profil | Accès |
+|---|---|
+| Administrateur complet (`full`) | Tout, comme avant. Seul profil pouvant gérer les comptes (`manageAdmins` forcé à faux sinon). |
+| CRM uniquement (`crm`) | `/crm` complet (entreprises, suivi, contacts, opportunités, tâches, demandes du site, messagerie selon son droit), devis et factures **en brouillon seulement** (pas d’émission, de statut, de paiement, d’avoir ni d’envoi par email). Pas de tickets Support, pas d’administration : `/admin` le renvoie vers `/crm`, lien « Mon compte » pour son mot de passe. |
+| Technicien (`technician`) | Tickets Support dans `/admin` : lire, répondre, notes internes, statuts, fichiers ; entreprises et comptes clients en lecture (contexte). Ni suppression de ticket, ni CRM (`/crm` 404), ni demandes du site, ni contenu du site, ni invitations. |
+
+Règles dans `src/lib/access.ts` (`staffRole`, `isFullAdmin`, `canUseCRM`, `isTicketStaff`) ;
+`adminOnly` signifie désormais « administrateur complet ». Profil absent ou inconnu = aucun
+droit. Le garde-fou de suppression d’une entreprise compte les comptes et tickets Support
+avec tous les droits, quel que soit le profil.
+
+Migration `20261010_105721_admin_roles` : comptes existants « complet », nouveaux comptes
+« CRM » par défaut (moindre privilège).
+
+Créer un compte (propriétaire) : /admin → Administrateurs → créer, profil, droit messagerie,
+mot de passe provisoire transmis en privé ; la personne le change dans « Mon compte ».
+Nginx : /admin et /crm sont derrière la Basic Auth (utilisateur `ydiop`) ; chaque personne
+doit avoir sa propre entrée, créée par le propriétaire sur le VPS :
+`sudo htpasswd -B /etc/nginx/5sursync-admin.htpasswd <identifiant>` (mot de passe saisi par
+lui ou par la personne, jamais par l’agent), sans reload nécessaire.

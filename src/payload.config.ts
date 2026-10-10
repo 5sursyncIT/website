@@ -48,6 +48,10 @@ export default buildConfig({
         Icon: "@/components/admin/Brand#Icon",
       },
       beforeDashboard: ["@/components/admin/Overview#Overview"],
+      beforeNavLinks: [
+        "@/components/admin/Brand#NavBrand",
+        "@/components/admin/CrmNavLink#CrmNavLink",
+      ],
     },
   },
   i18n: { supportedLanguages: { fr }, fallbackLanguage: "fr" },

@@ -23,13 +23,41 @@ export const dealStages = [
   ["lost", "Perdue", 0],
 ] as const;
 export const openDealStages = ["lead", "qualified", "proposal", "negotiation"] as const;
+// Commercial follow-up of a company (one card per company, independent of deals).
+// Active stages first, in order; "on-hold" = interested, no budget yet: re-contact later.
+export const prospectStages = [
+  ["to-contact", "À contacter"],
+  ["contacted", "Contacté, sans réponse"],
+  ["engaged", "Échange engagé"],
+  ["need", "Besoin identifié"],
+  ["meeting", "Rendez-vous"],
+  ["quote", "Devis envoyé"],
+  ["on-hold", "En attente (budget)"],
+  ["won", "Gagné"],
+  ["lost", "Perdu"],
+] as const;
+export const activeProspectStages = ["to-contact", "contacted", "engaged", "need", "meeting", "quote", "on-hold"] as const;
+// Stages a sent quote moves forward to "quote" (never backwards, never a closed one).
+export const beforeQuoteStages = ["to-contact", "contacted", "engaged", "need", "meeting", "on-hold"] as const;
+export const lostReasons = [
+  ["budget", "Pas de budget"],
+  ["no-need", "Pas de besoin"],
+  ["competitor", "Concurrent retenu"],
+  ["price", "Prix trop élevé"],
+  ["no-answer", "Aucune réponse"],
+  ["timing", "Projet abandonné ou reporté"],
+  ["other", "Autre"],
+] as const;
 export const activityKinds = [
   ["call", "Appel"],
   ["email", "Email"],
+  ["whatsapp", "WhatsApp"],
   ["meeting", "Rendez-vous"],
   ["note", "Note"],
   ["task", "Tâche"],
 ] as const;
+// Kinds that are a real exchange with the company (moves "À contacter" to "Contacté").
+export const exchangeKinds = ["call", "email", "whatsapp", "meeting"] as const;
 export type ClientStage = (typeof clientStages)[number][0];
 export type DealStage = (typeof dealStages)[number][0];
 export type ActivityKind = (typeof activityKinds)[number][0];
@@ -39,6 +67,31 @@ export const clientStageLabel = (v: unknown) => label(clientStages, v);
 export const clientSourceLabel = (v: unknown) => label(clientSources, v);
 export const dealStageLabel = (v: unknown) => label(dealStages, v);
 export const activityKindLabel = (v: unknown) => label(activityKinds, v);
+export type ProspectStage = (typeof prospectStages)[number][0];
+// A company without a stage (created before the follow-up existed) is "À contacter".
+export const prospectStageOf = (v: unknown): ProspectStage =>
+  prospectStages.some(([s]) => s === v) ? (v as ProspectStage) : "to-contact";
+export const prospectStageLabel = (v: unknown) => label(prospectStages, prospectStageOf(v));
+export const lostReasonLabel = (v: unknown) => label(lostReasons, v);
+export const isActiveProspect = (v: unknown) =>
+  (activeProspectStages as readonly unknown[]).includes(prospectStageOf(v));
+// "Next action" rule, decided on 10 October 2026 — one alert, everywhere, never a refusal.
+// A company at an active stage with no open dated action is incomplete follow-up: it is
+// signalled on the home page ("Entreprises en cours sans prochaine action"), on the board
+// (card marked "Aucune action prévue" + count in the header), on its own page, and in the
+// message returned after a save, a stage move or a CSV import. Only the follow-up form
+// refuses, because there the next action is a field the person is already filling in.
+// Writes through the Payload admin, the REST API and the CSV import stay possible on
+// purpose: blocking them would break legitimate bulk and integration work. Those companies
+// surface in the views above instead of being silently correct.
+export const missingNextAction = (pipeline: unknown, plannedCount: number) =>
+  isActiveProspect(pipeline) && plannedCount === 0;
+// Order of the "to plan" list: the most advanced conversations first.
+export const prospectPriority = (v: unknown) => {
+  const order = ["quote", "meeting", "need", "engaged", "on-hold", "contacted", "to-contact"];
+  const i = order.indexOf(prospectStageOf(v));
+  return i < 0 ? order.length : i;
+};
 export const defaultProbability = (stage: unknown) =>
   dealStages.find(([v]) => v === stage)?.[2] ?? 10;
 export const isOpenStage = (stage: unknown) =>
@@ -67,12 +120,13 @@ export function safeBack(value: unknown, fallback = "/crm") {
   return /^\/crm(\/[\w\-/]*)?(\?[\w\-=&%.]*)?$/.test(path) && !path.includes("//") ? path : fallback;
 }
 export function withMessage(path: string, key: "ok" | "erreur", message: string) {
-  const [base, query = ""] = path.split("?");
+  const [target, hash] = path.split("#");
+  const [base, query = ""] = target.split("?");
   const params = new URLSearchParams(query);
   params.delete("ok");
   params.delete("erreur");
   params.set(key, message);
-  return `${base}?${params}`;
+  return `${base}?${params}${hash ? `#${hash}` : ""}`;
 }
 // Search: lower case, accents removed, single spaces. Stored in search_text and
 // compared with pg_trgm, so "societe", "Société" and "sociéte" all match.

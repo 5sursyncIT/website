@@ -5,6 +5,8 @@ import { canMail } from "@/lib/mail/access";
 import { mailContext, mailUnavailable } from "@/lib/mail/crm";
 import { Submit } from "@/components/crm/client";
 import { Flash, Head } from "@/components/crm/parts";
+import { isImap, mailboxAddress } from "@/lib/mail/service";
+import { ATTACHMENT_LIMITS } from "@/lib/mail/mime";
 import { newDraft } from "../actions";
 export const metadata = { title: "Nouveau mail" };
 type Search = Promise<Record<string, string | string[] | undefined>>;
@@ -34,7 +36,7 @@ export default async function NewMailPage({ searchParams }: { searchParams: Sear
           <input type="hidden" name="back" value={back} />
           {client && <input type="hidden" name="client" value={client.id} />}
           <div className="crm-grid">
-            <label className="crm-span-all">Expéditeur<input value="contact@5sursync.com (boîte partagée)" readOnly disabled /></label>
+            <label className="crm-span-all">Expéditeur<input value={isImap(deps) ? `${deps.imap.config.displayName} <${mailboxAddress(deps)}>` : `${mailboxAddress(deps)} (boîte partagée)`} readOnly disabled /></label>
             {contacts && contacts.docs.length > 0 && (
               <label className="crm-span-all">Contact
                 <select name="contact" defaultValue={contactId ?? ""}>
@@ -47,8 +49,9 @@ export default async function NewMailPage({ searchParams }: { searchParams: Sear
             <label className="crm-span-all">Cc<input name="cc" maxLength={500} /></label>
             <label className="crm-span-all">Objet *<input name="subject" required maxLength={300} /></label>
             <label className="crm-span-all">Message *<textarea name="text" rows={12} maxLength={20000} required /></label>
+            {isImap(deps) && <label className="crm-span-all">Pièces jointes ({ATTACHMENT_LIMITS.count} au plus, 4 Mo au total ; exécutables et pages web refusés)<input type="file" name="files" multiple /></label>}
           </div>
-          <p className="crm-hint">La signature validée de contact@ (logo à droite) est ajoutée une seule fois. Le mail est enregistré dans les Brouillons de contact@ : rien n’est envoyé.</p>
+          <p className="crm-hint">La signature validée (logo à droite) est ajoutée une seule fois. Le mail est enregistré dans le dossier Brouillons de {mailboxAddress(deps)} : rien n’est envoyé.</p>
           <Submit>Enregistrer le brouillon</Submit>
         </form>
       </section>

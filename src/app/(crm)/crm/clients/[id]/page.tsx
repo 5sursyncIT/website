@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { as, crmContext, formatDate } from "@/lib/crm-server";
-import { clientSourceLabel, isOpenStage, money, weighted } from "@/lib/crm";
+import { as, crmContext, formatDate, formatDateTime, pageNumber } from "@/lib/crm-server";
+import { activityKindLabel, clientSourceLabel, isActiveProspect, isOpenStage, lostReasonLabel, money, prospectStages, weighted } from "@/lib/crm";
 import { statusLabel } from "@/lib/support";
+import { topicLabel } from "@/lib/contact-topics";
 import { database } from "@/lib/database";
 import { reminderStates } from "@/lib/crm-reminders";
 import { deleteClient, deleteContact } from "../../actions";
@@ -10,7 +11,7 @@ import { Submit } from "@/components/crm/client";
 import { WhatsAppButton } from "@/components/crm/whatsapp";
 import { MailSection } from "@/components/crm/mail";
 import { waCandidates, waMode } from "@/lib/whatsapp";
-import { ActivityForm, ClientForm, ClientStage, ContactForm, DealForm, DealRows, DocumentRows, Flash, Head, Timeline } from "@/components/crm/parts";
+import { ActivityForm, ClientForm, ClientStage, ContactForm, DealForm, DealRows, DocumentRows, Flash, FollowUpForm, Head, Pager, ProspectStage, Timeline, param } from "@/components/crm/parts";
 type Params = Promise<{ id: string }>;
 type Search = Promise<Record<string, string | string[] | undefined>>;
 export async function generateMetadata() {
@@ -25,29 +26,45 @@ export default async function ClientPage({ params, searchParams }: { params: Par
   const client = await payload.findByID({ collection: "clients", id, depth: 1, disableErrors: true, ...as(ctx) });
   if (!client) notFound();
   const where = { client: { equals: id } };
-  const [contacts, deals, activities, tickets, accounts, admins, documents] = await Promise.all([
+  const historyPage = pageNumber(param(search, "page"));
+  const [contacts, deals, todoAll, historyPaged, tickets, accounts, admins, documents] = await Promise.all([
     payload.find({ collection: "crm-contacts", where, sort: "-primary,name", pagination: false, depth: 0, ...as(ctx) }),
     payload.find({ collection: "crm-deals", where, sort: "-updatedAt", pagination: false, depth: 0, ...as(ctx) }),
-    payload.find({ collection: "crm-activities", where, sort: "-createdAt", limit: 50, depth: 1, ...as(ctx) }),
-    payload.find({ collection: "tickets", where, sort: "-updatedAt", limit: 5, depth: 0, select: { subject: true, status: true, updatedAt: true }, ...as(ctx) }),
-    payload.count({ collection: "client-accounts", where, ...as(ctx) }),
+    // Open tasks: every one of them, soonest due date first. Never capped, so an old
+    // action still open stays the next action instead of falling off a recent-50 window.
+    payload.find({ collection: "crm-activities", where: { ...where, done: { equals: false } }, sort: "dueAt", pagination: false, depth: 1, ...as(ctx) }),
+    // History: done activities, newest first, paginated.
+    payload.find({ collection: "crm-activities", where: { ...where, done: { equals: true } }, sort: "-createdAt", page: historyPage, limit: 20, depth: 1, ...as(ctx) }),
+    // Support data: counted with full rights (deletion guard), listed for full administrators only.
+    payload.find({ collection: "tickets", where, sort: "-updatedAt", limit: 5, depth: 0, select: { subject: true, status: true, updatedAt: true }, overrideAccess: true }),
+    payload.count({ collection: "client-accounts", where, overrideAccess: true }),
     payload.find({ collection: "admins", pagination: false, depth: 0, ...as(ctx) }),
     payload.find({ collection: "crm-documents", where, sort: "-createdAt", limit: 20, depth: 0, ...as(ctx) }),
   ]);
-  const reminders = await reminderStates(database(), activities.docs.map((a) => a.id));
+  const reminders = await reminderStates(database(), [...todoAll.docs, ...historyPaged.docs].map((a) => a.id));
   const back = `/crm/clients/${id}`;
   const open = deals.docs.filter((d) => isOpenStage(d.stage));
   const won = deals.docs.filter((d) => d.stage === "won");
-  // Open tasks first, by due date; then the history.
-  const todo = activities.docs.filter((a) => !a.done).sort((a, b) => String(a.dueAt ?? "9").localeCompare(String(b.dueAt ?? "9")));
-  const history = activities.docs.filter((a) => a.done);
+  // Open tasks first (dated ones by due date, undated last); then the paginated history.
+  const todo = todoAll.docs.slice().sort((a, b) => String(a.dueAt ?? "9").localeCompare(String(b.dueAt ?? "9")));
+  const history = historyPaged.docs;
+  // Next actions: open and dated, soonest first. Computed on every open task, not a window.
+  const planned = todo.filter((a) => a.dueAt);
+  const next = planned[0];
+  const active = isActiveProspect(client.pipeline);
+  const needs = (client.needs ?? []) as string[];
+  const now = Date.now();
+  const closeParam = Number(param(search, "action"));
+  const close = planned.some((a) => a.id === closeParam) ? closeParam : null;
+  const stageParam = param(search, "etape");
+  const presetStage = prospectStages.some(([v]) => v === stageParam) ? stageParam : undefined;
   const wa = waCandidates({ client, contacts: contacts.docs, scope: "client" });
   const owner = client.owner && typeof client.owner === "object" ? client.owner.name || client.owner.email : null;
   return (
     <>
       <Head title={client.name} eyebrow={<Link href="/crm/clients">← Entreprises</Link>}>
         <ClientStage stage={client.stage} />
-        <a className="crm-btn crm-btn--ghost" href={`/admin/collections/clients/${id}`}>Accès Support ↗</a>
+        {ctx.full && <a className="crm-btn crm-btn--ghost" href={`/admin/collections/clients/${id}`}>Accès Support ↗</a>}
       </Head>
       <Flash search={search} />
       <section className="crm-facts">
@@ -64,6 +81,43 @@ export default async function ClientPage({ params, searchParams }: { params: Par
       {client.sourceRequest && typeof client.sourceRequest === "object" && (
         <p className="crm-hint">Créée depuis la demande du site de {client.sourceRequest.name} du {formatDate(client.sourceRequest.createdAt)}.</p>
       )}
+      <section className="crm-card crm-next" id="suivi">
+        <div className="crm-next__head">
+          <div>
+            <span className="crm-sub">Étape commerciale{client.pipelineAt ? ` depuis le ${formatDate(client.pipelineAt)}` : ""}</span>
+            <strong><ProspectStage stage={client.pipeline} />{client.pipeline === "lost" && client.lostReason ? ` · ${lostReasonLabel(client.lostReason)}` : ""}</strong>
+          </div>
+          <div>
+            <span className="crm-sub">Prochaine action</span>
+            {next ? (
+              <strong className={new Date(next.dueAt!).getTime() < now ? "crm-late" : ""}>
+                {activityKindLabel(next.kind)} · {next.subject} · {formatDateTime(next.dueAt)}
+                {next.assignee && typeof next.assignee === "object" ? ` → ${next.assignee.name || next.assignee.email}` : ""}
+              </strong>
+            ) : active ? (
+              <strong className="crm-late">Aucune action prévue : planifiez la suivante.</strong>
+            ) : (
+              <strong>—</strong>
+            )}
+          </div>
+        </div>
+        <div className="crm-next__needs">
+          <span className="crm-sub">Besoins et services demandés</span>
+          {needs.length ? (
+            <ul className="crm-tags">
+              {needs.map((n) => <li key={n}>{topicLabel(n)}</li>)}
+            </ul>
+          ) : (
+            <strong className="crm-sub">Aucun besoin renseigné : à préciser lors du prochain échange.</strong>
+          )}
+          {client.needsDetail && <p className="crm-pre">{client.needsDetail}</p>}
+        </div>
+        <details className="crm-add" open={!next && active || !!close || !!presetStage}>
+          <summary>Enregistrer le suivi : échange, étape, prochaine action</summary>
+          <FollowUpForm client={client} planned={planned} contacts={contacts.docs} admins={admins.docs} me={ctx.user.id as number}
+            back={back} close={close} stage={presetStage} />
+        </details>
+      </section>
       <div className="crm-cols crm-cols--wide">
         <div className="crm-stack">
           <section className="crm-card">
@@ -72,9 +126,10 @@ export default async function ClientPage({ params, searchParams }: { params: Par
               <summary>+ Noter un échange ou planifier une tâche</summary>
               <ActivityForm clientID={id} contacts={contacts.docs} admins={admins.docs} back={back} />
             </details>
-            {todo.length > 0 && <><h3>À faire</h3><Timeline activities={todo} back={back} reminders={reminders} /></>}
-            <h3>Historique</h3>
+            {todo.length > 0 && <><h3>À faire <span className="crm-count">{todo.length}</span></h3><Timeline activities={todo} back={back} reminders={reminders} /></>}
+            <h3>Historique <span className="crm-count">{historyPaged.totalDocs}</span></h3>
             <Timeline activities={history} back={back} reminders={reminders} />
+            <Pager page={historyPaged.page ?? 1} totalPages={historyPaged.totalPages} base={`/crm/clients/${id}`} search={search} />
           </section>
           <MailSection clientId={id} to={client.email} />
           <section className="crm-card">
@@ -127,7 +182,7 @@ export default async function ClientPage({ params, searchParams }: { params: Par
               <ContactForm clientID={id} back={back} />
             </details>
           </section>
-          <section className="crm-card">
+          {ctx.full && <section className="crm-card">
             <h2>Support client</h2>
             <p className="crm-hint">
               {accounts.totalDocs} utilisateur{accounts.totalDocs > 1 ? "s" : ""} de l’espace Support · {tickets.totalDocs} ticket{tickets.totalDocs > 1 ? "s" : ""}.
@@ -143,7 +198,7 @@ export default async function ClientPage({ params, searchParams }: { params: Par
                 ))}
               </ul>
             )}
-          </section>
+          </section>}
           <section className="crm-card">
             <details id="coordonnees">
               <summary className="crm-summary">Modifier les informations de l’entreprise</summary>

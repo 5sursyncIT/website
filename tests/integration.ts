@@ -24,6 +24,7 @@ try {
         email: process.env.BOOTSTRAP_ADMIN_EMAIL!,
         password: "fixture-only-not-a-real-password",
         mailAccess: "none",
+        role: "full",
       },
     }),
   );
@@ -35,6 +36,7 @@ try {
       email: "admin@example.test",
       password: "fixture-only-not-a-real-password",
       mailAccess: "none",
+      role: "full",
     },
     overrideAccess: true,
   });
@@ -78,6 +80,7 @@ try {
     data: {
       subject: "Fixture ticket A",
       category: "autre",
+      priority: "normal" as const,
       description: "Description fixture suffisamment longue",
       client: cb.id,
       author: { relationTo: "admins", value: admin.id },

@@ -7,6 +7,13 @@ import {
   clientOrAdmin,
   clientID,
   isAdmin,
+  isFullAdmin,
+  isTicketStaff,
+  canUseCRM,
+  crmOnly,
+  staffRole,
+  staffRoles,
+  ticketStaffOnly,
   relationID,
 } from "@/lib/access";
 import path from "node:path";
@@ -16,8 +23,9 @@ import {
   builtinLogoOptions,
   projectStatuses,
 } from "@/lib/showcase";
-import { topicLabel, topics } from "@/lib/contact-topics";
-import { clientCRMFields, clientSearchFields, searchHook } from "./crm";
+import { serviceLabel, topicLabel, topics } from "@/lib/contact-topics";
+import { ticketPriorities } from "@/lib/support";
+import { clientCRMFields, clientPipelineHook, clientSearchFields, searchHook } from "./crm";
 import { canManageAdmins, canSetRights, mailLevels } from "@/lib/mail/access";
 export { CRMContacts, CRMDeals, CRMActivities, CRMDocuments } from "./crm";
 // Admin navigation groups (presentation only, no schema impact).
@@ -35,12 +43,19 @@ export const Admins: CollectionConfig = {
       async ({ doc, operation, req }) => {
         // The bootstrap administrator (first account, private path only, see beforeValidate)
         // manages accounts; nobody else can grant that right to themselves.
-        if (operation === "create" && !req.user && doc.manageAdmins !== true) {
+        if (operation === "create" && !req.user && (doc.manageAdmins !== true || doc.role !== "full")) {
           const count = await req.payload.count({ collection: "admins", overrideAccess: true, req });
           if (count.totalDocs === 1)
-            await req.payload.update({ collection: "admins", id: doc.id, data: { manageAdmins: true }, overrideAccess: true, req });
+            await req.payload.update({ collection: "admins", id: doc.id, data: { manageAdmins: true, role: "full" }, overrideAccess: true, req });
         }
         return doc;
+      },
+    ],
+    beforeChange: [
+      // Managing accounts is reserved to full administrators.
+      ({ data, originalDoc }) => {
+        if ((data.role ?? originalDoc?.role) !== "full") data.manageAdmins = false;
+        return data;
       },
     ],
     beforeValidate: [
@@ -89,16 +104,33 @@ export const Admins: CollectionConfig = {
     hideAPIURL: true,
   },
   access: {
-    admin: ({ req }) => isAdmin(req.user),
-    // Accounts are managed only by holders of the "manageAdmins" right (separate from the
-    // mailbox rights). Everyone else edits only their own name and password.
-    create: ({ req }) => isAdmin(req.user) && canManageAdmins(req.user),
-    read: adminOnly,
-    update: ({ req, id }) => isAdmin(req.user) && (String(req.user!.id) === String(id) || canManageAdmins(req.user)),
-    delete: ({ req, id }) => isAdmin(req.user) && String(req.user!.id) !== String(id) && canManageAdmins(req.user),
+    // Every profile signs in here; a CRM-only account is sent on to /crm (Overview).
+    admin: ({ req }) => staffRole(req.user) !== null,
+    // Accounts are managed only by full administrators holding the "manageAdmins" right
+    // (separate from the mailbox rights). Everyone else edits only their own name and password.
+    create: ({ req }) => isFullAdmin(req.user) && canManageAdmins(req.user),
+    read: ({ req }) => isAdmin(req.user),
+    update: ({ req, id }) => isAdmin(req.user) && (String(req.user!.id) === String(id) || (isFullAdmin(req.user) && canManageAdmins(req.user))),
+    delete: ({ req, id }) => isFullAdmin(req.user) && String(req.user!.id) !== String(id) && canManageAdmins(req.user),
   },
   fields: [
     { name: "name", label: "Nom", type: "text", required: true },
+    {
+      name: "role",
+      label: "Profil",
+      type: "select",
+      required: true,
+      defaultValue: "crm",
+      options: staffRoles.map(([value, label]) => ({ value, label })),
+      admin: {
+        position: "sidebar",
+        description: "Complet : tout. CRM : /crm seulement (devis et factures en brouillon). Technicien : tickets Support seulement. Modifiable seulement par un gestionnaire des comptes, jamais sur son propre compte.",
+      },
+      access: {
+        create: ({ req }) => canSetRights(req.user, null),
+        update: ({ req, id, doc }) => canSetRights(req.user, id ?? doc?.id),
+      },
+    },
     {
       name: "mailAccess",
       label: "Messagerie contact@ (CRM)",
@@ -143,12 +175,12 @@ export const Clients: CollectionConfig = {
     hideAPIURL: true,
   },
   access: {
-    create: adminOnly,
-    read: adminOnly,
-    update: adminOnly,
-    delete: adminOnly,
+    create: crmOnly,
+    read: ({ req }) => canUseCRM(req.user) || isTicketStaff(req.user),
+    update: crmOnly,
+    delete: crmOnly,
   },
-  hooks: { beforeChange: [searchHook(clientSearchFields)] },
+  hooks: { beforeChange: [clientPipelineHook, searchHook(clientSearchFields)] },
   fields: [
     { name: "name", label: "Nom de l’entreprise", type: "text", required: true },
     ...clientCRMFields,
@@ -175,6 +207,8 @@ export const ClientAccounts: CollectionConfig = {
   },
   labels: { singular: "Utilisateur client", plural: "Utilisateurs clients" },
   admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user),
     useAsTitle: "email",
     group: group.support,
     description:
@@ -186,7 +220,7 @@ export const ClientAccounts: CollectionConfig = {
     admin: () => false,
     create: adminOnly,
     read: ({ req }) =>
-      isAdmin(req.user)
+      isTicketStaff(req.user)
         ? true
         : clientID(req.user) !== null
           ? { id: { equals: req.user!.id } }
@@ -251,7 +285,7 @@ export const ClientAccounts: CollectionConfig = {
       label: "Invitation valable jusqu’au",
       type: "date",
       admin: { position: "sidebar", readOnly: true },
-      access: { read: ({ req }) => isAdmin(req.user) },
+      access: { read: ({ req }) => isTicketStaff(req.user) },
     },
   ],
 };
@@ -262,7 +296,7 @@ const tenantField: Field = {
   relationTo: "clients",
   required: true,
   index: true,
-  access: { update: ({ req }) => isAdmin(req.user) },
+  access: { update: ({ req }) => isTicketStaff(req.user) },
 };
 const authorField: Field = {
   name: "author",
@@ -288,7 +322,7 @@ export const Tickets: CollectionConfig = {
   admin: {
     useAsTitle: "subject",
     group: group.support,
-    defaultColumns: ["subject", "client", "category", "status", "updatedAt"],
+    defaultColumns: ["subject", "client", "priority", "status", "updatedAt"],
     listSearchableFields: ["subject", "description"],
     description:
       "Demandes ouvertes par les clients dans l’espace Support. Répondre au client ou ajouter une note interne en bas de chaque ticket.",
@@ -297,7 +331,7 @@ export const Tickets: CollectionConfig = {
   access: {
     create: clientOrAdmin,
     read: tenantRead,
-    update: adminOnly,
+    update: ticketStaffOnly,
     delete: adminOnly,
   },
   hooks: {
@@ -331,6 +365,18 @@ export const Tickets: CollectionConfig = {
       options: topics.map(([value, label]) => ({ value, label })),
     },
     {
+      name: "priority",
+      label: "Priorité",
+      type: "select",
+      required: true,
+      defaultValue: "normal",
+      index: true,
+      options: ticketPriorities.map(([value, label]) => ({ value, label })),
+      // Triage by the team only: a client never sets it (see lib/support.ts).
+      access: { update: ({ req }) => isTicketStaff(req.user) },
+      admin: { position: "sidebar", description: "Tri des tickets sur l’accueil du CRM." },
+    },
+    {
       name: "description",
       label: "Description",
       type: "textarea",
@@ -360,8 +406,8 @@ export const Tickets: CollectionConfig = {
         { label: "Fermé", value: "closed" },
       ],
       access: {
-        create: ({ req }) => isAdmin(req.user),
-        update: ({ req }) => isAdmin(req.user),
+        create: ({ req }) => isTicketStaff(req.user),
+        update: ({ req }) => isTicketStaff(req.user),
       },
       admin: { position: "sidebar" },
     },
@@ -380,7 +426,7 @@ export const Replies: CollectionConfig = {
   access: {
     create: clientOrAdmin,
     read: tenantRead,
-    update: adminOnly,
+    update: ticketStaffOnly,
     delete: adminOnly,
   },
   hooks: {
@@ -433,9 +479,9 @@ export const Notes: CollectionConfig = {
     hideAPIURL: true,
   },
   access: {
-    create: adminOnly,
-    read: adminOnly,
-    update: adminOnly,
+    create: ticketStaffOnly,
+    read: ticketStaffOnly,
+    update: ticketStaffOnly,
     delete: adminOnly,
   },
   fields: [
@@ -478,7 +524,7 @@ export const Files: CollectionConfig = {
       name: "storageKey",
       type: "text",
       required: true,
-      access: { read: ({ req }) => isAdmin(req.user) },
+      access: { read: ({ req }) => isTicketStaff(req.user) },
       admin: { hidden: true },
     },
   ],
@@ -508,6 +554,8 @@ export const Pages: CollectionConfig = {
   labels: { singular: "Page", plural: "Pages" },
   defaultSort: "title",
   admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user),
     useAsTitle: "title",
     group: group.site,
     defaultColumns: ["title", "slug", "updatedAt"],
@@ -563,6 +611,8 @@ export const Media: CollectionConfig = {
   slug: "media",
   labels: { singular: "Image", plural: "Médiathèque" },
   admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user),
     group: group.site,
     defaultColumns: ["filename", "alt", "updatedAt"],
     description: "Logos et visuels utilisés par les réalisations.",
@@ -624,6 +674,8 @@ export const Projects: CollectionConfig = {
   labels: { singular: "Projet", plural: "Projets (réalisations)" },
   defaultSort: "order",
   admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user),
     useAsTitle: "name",
     group: group.site,
     hideAPIURL: true,
@@ -675,6 +727,8 @@ export const CaseStudies: CollectionConfig = {
   labels: { singular: "Étude de cas", plural: "Études de cas" },
   defaultSort: "order",
   admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user),
     useAsTitle: "client",
     group: group.site,
     hideAPIURL: true,
@@ -728,7 +782,9 @@ export const CaseStudies: CollectionConfig = {
 export const SocialLinks: GlobalConfig = {
   slug: "social-links",
   label: "Réseaux sociaux",
-  admin: { group: group.site, hideAPIURL: true },
+  admin: {
+    // Full administrators only; other profiles keep their own account (/admin/account).
+    hidden: ({ user }) => !isFullAdmin(user), group: group.site, hideAPIURL: true },
   access: { read: () => true, update: adminOnly },
   hooks: {
     afterChange: [
@@ -777,14 +833,14 @@ export const Contacts: CollectionConfig = {
   admin: {
     useAsTitle: "name",
     group: group.inbox,
-    defaultColumns: ["name", "company", "topicLabel", "email", "createdAt", "notification"],
+    defaultColumns: ["name", "company", "topicLabel", "serviceLabel", "email", "createdAt"],
     listSearchableFields: ["name", "company", "email", "message"],
     description:
       "Messages reçus par le formulaire Contact du site. Lecture seule : répondre par email ou téléphone.",
     hideAPIURL: true,
   },
   access: {
-    read: adminOnly,
+    read: crmOnly,
     create: () => false,
     update: adminOnly,
     delete: adminOnly,
@@ -814,6 +870,16 @@ export const Contacts: CollectionConfig = {
       ],
     },
     { name: "topic", type: "text", required: true, admin: { hidden: true } },
+    // Service page the visitor was reading when they wrote, when they came from one.
+    { name: "service", type: "text", admin: { hidden: true } },
+    {
+      name: "serviceLabel",
+      label: "Page consultée",
+      type: "text",
+      virtual: true,
+      admin: { readOnly: true, description: "Service consulté avant l’envoi du formulaire." },
+      hooks: { afterRead: [({ siblingData }) => serviceLabel(siblingData?.service) || "—"] },
+    },
     {
       name: "topicLabel",
       label: "Sujet",

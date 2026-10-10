@@ -1,6 +1,6 @@
 services:
   app-production:
-    image: 5sursync:i18n-20261009
+    image: 5sursync:audit-besoins-20261010
     build:
       context: .
       args:
@@ -29,7 +29,13 @@ services:
       PAYLOAD_SECRET_FILE: /run/secrets/payload_secret
       PRIVATE_UPLOAD_PATH: /app/storage/private
       MEDIA_STORAGE_PATH: /app/storage/media
-    secrets: [database_uri, payload_secret, smtp_password]
+      # CRM mailbox: Simafri contact@crm.5sursync.com (documentation/messagerie-simafri.md).
+      # Acceptance: one recipient only. Rollback: backups/20261009T135314Z-pre-simafri/compose.production.yaml.
+      MAIL_ENABLED: 'true'
+      MAIL_PROVIDER: imap
+      MAIL_PASSWORD_FILE: /run/secrets/crm_mail_password
+      MAIL_SEND_ALLOWLIST: youssouphadiop@hotmail.fr
+    secrets: [database_uri, payload_secret, smtp_password, crm_mail_password]
     volumes: [private_files:/app/storage/private, public_media:/app/storage/media]
     networks: [database, egress]
     healthcheck:
@@ -46,3 +52,5 @@ services:
 secrets:
   smtp_password:
     file: ./secrets/smtp_password
+  crm_mail_password:
+    file: ./secrets/crm_mail_password

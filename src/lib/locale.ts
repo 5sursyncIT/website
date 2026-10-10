@@ -17,12 +17,15 @@ export const enPaths: Record<string, string> = {
 const frPaths = Object.fromEntries(Object.entries(enPaths).map(([fr, en]) => [en, fr]));
 export const localeOf = (pathname: string): Locale =>
   pathname === "/en" || pathname.startsWith("/en/") ? "en" : "fr";
-/** Localised href for a French site path, keeping any #anchor. Unknown paths (Support) stay as is. */
+/** Localised href for a French site path, keeping any ?query and #anchor.
+ *  Unknown paths (Support) stay as is. The query matters for /contact?service=…,
+ *  so it is split off before the lookup instead of defeating it. */
 export function localePath(locale: Locale, path: string) {
   if (locale === "fr") return path;
-  const [base, hash] = path.split("#");
+  const [withoutHash, hash] = path.split("#");
+  const [base, query] = withoutHash.split("?");
   const target = enPaths[base] ?? base;
-  return hash === undefined ? target : `${target}#${hash}`;
+  return `${target}${query ? `?${query}` : ""}${hash === undefined ? "" : `#${hash}`}`;
 }
 /** Same page in the other language; the home page of that language when there is no match. */
 export function switchPath(pathname: string): string {

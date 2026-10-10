@@ -1,6 +1,6 @@
 import type { CollectionBeforeChangeHook, CollectionConfig, Field, PayloadRequest } from "payload";
 import { APIError } from "payload";
-import { adminOnly, isAdmin, relationID } from "@/lib/access";
+import { crmOnly, isAdmin, isFullAdmin, relationID } from "@/lib/access";
 import {
   activityKinds,
   clientSources,
@@ -19,10 +19,14 @@ import {
   type DocumentKind,
   clientStages,
   dealStages,
+  beforeQuoteStages,
+  lostReasons,
+  prospectStages,
   defaultProbability,
   isOpenStage,
   options,
 } from "@/lib/crm";
+import { topics } from "@/lib/contact-topics";
 // CRM: commercial follow-up of client companies. Admins only, never visible to
 // client accounts. Companies are the existing "clients" collection (CRM fields below).
 export const crmGroup = "CRM";
@@ -33,7 +37,8 @@ export class CRMRuleError extends APIError {
     super(message, 400);
   }
 }
-const adminAccess = { create: adminOnly, read: adminOnly, update: adminOnly, delete: adminOnly };
+// Full administrators and CRM-only accounts (never technicians nor client accounts).
+const adminAccess = { create: crmOnly, read: crmOnly, update: crmOnly, delete: crmOnly };
 const isWebsite = (value: unknown) =>
   value == null || value === "" || /^https?:\/\/[^\s/@]+\.[^\s@]+$/i.test(String(value)) ||
   "Adresse complète en http(s):// requise.";
@@ -48,6 +53,32 @@ export const searchField: Field = {
 export const searchHook = (fields: string[]): CollectionBeforeChangeHook => ({ data, originalDoc }) => {
   const doc = { ...originalDoc, ...data } as Record<string, unknown>;
   data.searchText = normalizeSearch(...fields.map((f) => doc[f]));
+  return data;
+};
+// Moves a company's commercial stage forward after a deal or quote event.
+// "from" limits the move (a sent quote never pulls back a company already further on).
+async function advanceCompany(req: PayloadRequest, client: unknown, to: "quote" | "won", from?: readonly string[]) {
+  const id = relationID(client);
+  if (id === null) return;
+  const doc = await req.payload.findByID({ collection: "clients", id, depth: 0, req, overrideAccess: true });
+  const current = doc.pipeline ?? "to-contact";
+  if (from ? !from.includes(current) : current === to && doc.stage !== "prospect") return;
+  await req.payload.update({ collection: "clients", id, data: { pipeline: to }, req, overrideAccess: true });
+}
+// Commercial stage rules, on every write (CRM pages, admin, API):
+// date of the last change, "won" turns a prospect into a client, a loss needs its reason.
+export const clientPipelineHook: CollectionBeforeChangeHook = ({ data, originalDoc, operation }) => {
+  if (operation === "create" && !data.pipeline)
+    data.pipeline = data.stage === "client" || data.stage === "inactive" ? "won" : "to-contact";
+  const before = originalDoc?.pipeline ?? null;
+  const pipeline = data.pipeline ?? before;
+  if (operation === "create" || (data.pipeline !== undefined && data.pipeline !== before))
+    data.pipelineAt = new Date().toISOString();
+  if (pipeline === "won" && (data.stage ?? originalDoc?.stage) === "prospect") data.stage = "client";
+  if (pipeline === "lost") {
+    const reason = "lostReason" in data ? data.lostReason : originalDoc?.lostReason;
+    if (!reason) throw new CRMRuleError("Indiquez la raison de la perte.");
+  } else if (data.pipeline !== undefined || data.lostReason) data.lostReason = null;
   return data;
 };
 const ownerField: Field = {
@@ -76,6 +107,48 @@ export const clientCRMFields: Field[] = [
     index: true,
     options: options(clientStages),
     admin: { position: "sidebar" },
+  },
+  {
+    name: "pipeline",
+    label: "Étape commerciale",
+    type: "select",
+    defaultValue: "to-contact",
+    index: true,
+    options: options(prospectStages),
+    admin: { position: "sidebar", description: "Suivi commercial : /crm/suivi." },
+  },
+  {
+    name: "lostReason",
+    label: "Raison de la perte",
+    type: "select",
+    options: options(lostReasons),
+    admin: { position: "sidebar", condition: (data) => data?.pipeline === "lost" },
+  },
+  {
+    name: "pipelineAt",
+    label: "Étape depuis le",
+    type: "date",
+    admin: { position: "sidebar", readOnly: true },
+  },
+  // Besoins exprimés par l'entreprise. Même vocabulaire que le formulaire public et que
+  // les tickets (lib/contact-topics), pour qu'une demande convertie, un ticket et une
+  // fiche parlent des mêmes services. Renseigné à la conversion d'une demande du site,
+  // puis complété à la main au fil des échanges.
+  {
+    name: "needs",
+    label: "Besoins et services demandés",
+    type: "select",
+    hasMany: true,
+    index: true,
+    options: topics.map(([value, label]) => ({ value, label })),
+    admin: { description: "Ce que l’entreprise demande. Repris dans les indicateurs commerciaux." },
+  },
+  {
+    name: "needsDetail",
+    label: "Détail du besoin",
+    type: "textarea",
+    maxLength: 2000,
+    admin: { description: "Contexte, périmètre, contraintes : ce qui ne tient pas dans les cases ci-dessus." },
   },
   { ...ownerField },
   {
@@ -134,6 +207,8 @@ export const CRMContacts: CollectionConfig = {
   admin: {
     useAsTitle: "name",
     group: crmGroup,
+    // Managed in /crm (complete interface); kept out of /admin to avoid a duplicate.
+    hidden: true,
     hideAPIURL: true,
     defaultColumns: ["name", "jobTitle", "client", "email", "phone"],
     listSearchableFields: ["name", "email", "phone", "jobTitle"],
@@ -176,6 +251,8 @@ export const CRMDeals: CollectionConfig = {
   admin: {
     useAsTitle: "title",
     group: crmGroup,
+    // Managed in /crm (complete interface); kept out of /admin to avoid a duplicate.
+    hidden: true,
     hideAPIURL: true,
     defaultColumns: ["title", "client", "stage", "amount", "expectedClose", "owner"],
     listSearchableFields: ["title", "notes"],
@@ -203,15 +280,8 @@ export const CRMDeals: CollectionConfig = {
       return data;
     }],
     afterChange: [async ({ doc, previousDoc, req }) => {
-      // A won deal turns a prospect into a client.
-      if (doc.stage === "won" && previousDoc?.stage !== "won") {
-        const id = relationID(doc.client);
-        if (id !== null) {
-          const client = await req.payload.findByID({ collection: "clients", id, depth: 0, req, overrideAccess: true });
-          if (client.stage === "prospect")
-            await req.payload.update({ collection: "clients", id, data: { stage: "client" }, req, overrideAccess: true });
-        }
-      }
+      // A won deal wins the company's follow-up, which turns a prospect into a client.
+      if (doc.stage === "won" && previousDoc?.stage !== "won") await advanceCompany(req, doc.client, "won");
       return doc;
     }],
     beforeChange: [searchHook(["title", "notes"])],
@@ -270,6 +340,8 @@ export const CRMActivities: CollectionConfig = {
   admin: {
     useAsTitle: "subject",
     group: crmGroup,
+    // Managed in /crm (complete interface); kept out of /admin to avoid a duplicate.
+    hidden: true,
     hideAPIURL: true,
     defaultColumns: ["subject", "kind", "client", "dueAt", "done", "createdAt"],
     listSearchableFields: ["subject", "details"],
@@ -386,6 +458,8 @@ export const CRMDocuments: CollectionConfig = {
   admin: {
     useAsTitle: "title",
     group: crmGroup,
+    // Managed in /crm (complete interface); kept out of /admin to avoid a duplicate.
+    hidden: true,
     hideAPIURL: true,
     defaultColumns: ["number", "kind", "title", "client", "status", "total", "balance", "issueDate"],
     listSearchableFields: ["number", "title"],
@@ -404,6 +478,13 @@ export const CRMDocuments: CollectionConfig = {
       if (operation === "update" && status !== before && !documentTransitions[kind][before]?.includes(status))
         throw new CRMRuleError(`Passage de « ${statusLabels[before]} » à « ${statusLabels[status]} » impossible.`);
       if (operation === "create" && status !== "draft") throw new CRMRuleError("Un document est créé en brouillon.");
+      // A CRM-only account prepares drafts; issuing, status changes, payments and credit
+      // notes stay with a full administrator.
+      if (req.user && !isFullAdmin(req.user)) {
+        if (kind === "credit") throw new CRMRuleError("Les avoirs sont réservés à un administrateur complet.");
+        if (before !== "draft" || status !== "draft")
+          throw new CRMRuleError("Réservé à un administrateur complet : vous préparez les brouillons ; l’émission, les statuts et les paiements restent à l’administrateur.");
+      }
       // Content is frozen outside the editable statuses.
       if (operation === "update" && !documentEditable(kind, before))
         for (const field of frozen)
@@ -482,7 +563,11 @@ export const CRMDocuments: CollectionConfig = {
           if (isOpenStage(deal.stage))
             await req.payload.update({ collection: "crm-deals", id, data: { stage: "won", amount: doc.subtotal }, req, overrideAccess: true });
         }
+        await advanceCompany(req, doc.client, "won");
       }
+      // A sent quote moves the company's follow-up to "Devis envoyé".
+      if (doc.kind === "quote" && doc.status === "sent" && previousDoc?.status !== "sent")
+        await advanceCompany(req, doc.client, "quote", beforeQuoteStages);
       // An issued credit note lowers its invoice's balance: recompute it (may settle it).
       if (doc.kind === "credit" && doc.status === "issued" && previousDoc?.status !== "issued") {
         const id = relationID(doc.creditFor);

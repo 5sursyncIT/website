@@ -6,11 +6,15 @@ import { clientSchema, type ClientFields } from "@/lib/crm-schema";
 // decide exactly the same thing. Writing is done by the importClients server action.
 export const IMPORT_MAX_BYTES = 512 * 1024;
 export const IMPORT_MAX_ROWS = 2000;
-export type ImportField = Exclude<keyof ClientFields, "owner">;
+// The commercial stage is not imported: it follows the exchanges (a loss needs its reason).
+// Needs are not imported either: they are recorded from the exchanges and from converted
+// website requests, not from a spreadsheet column.
+export type ImportField = Exclude<keyof ClientFields, "owner" | "pipeline" | "lostReason" | "needs" | "needsDetail">;
 export type DuplicateMode = "skip" | "complete";
 export type ImportOptions = { defaultStage: ClientStage; duplicates: DuplicateMode };
 // Accepted headers, compared without accents, case or punctuation. The CRM's own
-// export (/crm/export/clients) re-imports as is; « Responsable » and « Créée le » are ignored.
+// export (/crm/export/clients) re-imports as is; « Étape commerciale », « Raison de la perte »,
+// « Prochaine action », « Responsable » and « Créée le » are ignored.
 const headers: Record<ImportField, string[]> = {
   name: ["entreprise", "nom", "nom de l entreprise", "societe", "raison sociale", "organisation", "organization", "company", "name"],
   stage: ["statut", "statut commercial", "stage", "status"],
@@ -119,7 +123,7 @@ export type PlannedRow = {
   name: string;
   action: "create" | "complete" | "skip" | "error";
   reason?: string;
-  data?: Omit<ClientFields, "owner">;
+  data?: Omit<ClientFields, "owner" | "pipeline" | "lostReason">;
   target?: { id: number; name: string };
   fill?: Partial<Pick<ClientFields, FillField>>;
 };
@@ -156,7 +160,7 @@ export function planImport(input: string, existing: ExistingClient[], options: I
     if (raw.stage && !stage) problems.push(`statut « ${raw.stage} » inconnu (Prospect, Client ou Ancien client)`);
     const source = raw.source ? choice(clientSources, raw.source) : null;
     if (raw.source && !source) problems.push(`origine « ${raw.source} » inconnue`);
-    const parsed = clientSchema.omit({ owner: true }).safeParse({ ...raw, stage: stage ?? options.defaultStage, source });
+    const parsed = clientSchema.omit({ owner: true, pipeline: true, lostReason: true }).safeParse({ ...raw, stage: stage ?? options.defaultStage, source });
     if (!parsed.success)
       problems.push(...parsed.error.issues.map((i) => {
         const label = fieldLabels[i.path[0] as ImportField] ?? "Champ";

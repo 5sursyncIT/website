@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 // Microsoft certificates of the contact@ link: visible warning from 30 days before expiry.
 function certBanner() {
   const status = mailStatus();
-  if (!status.enabled) return null;
+  if (!status.enabled || status.provider !== "graph") return null;
   const late = [status.config.read, status.config.send].filter((c) => certThreshold(c.notAfter) !== null);
   if (!late.length) return null;
   const left = Math.min(...late.map((c) => daysLeft(c.notAfter)));
@@ -19,7 +19,7 @@ function certBanner() {
   );
 }
 export default async function CRMLayout({ children }: { children: React.ReactNode }) {
-  const { user } = await crmContext();
+  const { user, full } = await crmContext();
   const name = "name" in user && typeof user.name === "string" ? user.name : "";
   return (
     <div className="crm-shell">
@@ -35,10 +35,10 @@ export default async function CRMLayout({ children }: { children: React.ReactNod
         <form action="/crm/recherche" role="search" className="crm-search">
           <input name="q" type="search" placeholder="Rechercher…" aria-label="Rechercher dans le CRM" maxLength={80} />
         </form>
-        <CRMNav />
+        <CRMNav full={full} />
         <div className="crm-side__foot">
           <span title={String(user.email ?? "")}>{name || String(user.email ?? "")}</span>
-          <a href="/admin">Administration ↗</a>
+          {full ? <a href="/admin">Administration ↗</a> : <a href="/admin/account">Mon compte ↗</a>}
         </div>
       </aside>
       <main id="crm-main" className="crm-main">

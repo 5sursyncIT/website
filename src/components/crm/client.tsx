@@ -3,21 +3,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { useRef } from "react";
+// "full" marks a page reserved for full administrators (Support and supervision data):
+// a CRM-only account would get a 404, so the link is not shown to them.
 const links = [
-  ["/crm", "Tableau de bord"],
+  ["/crm", "Aujourd’hui"],
+  ["/crm/suivi", "Suivi commercial"],
   ["/crm/clients", "Entreprises"],
   ["/crm/opportunites", "Opportunités"],
   ["/crm/documents", "Devis et factures"],
   ["/crm/contacts", "Contacts"],
   ["/crm/taches", "Tâches et activités"],
   ["/crm/demandes", "Demandes du site"],
+  ["/crm/rapports", "Indicateurs"],
   ["/crm/messagerie", "Messagerie contact@"],
+  ["/crm/systeme", "État du système", "full"],
 ] as const;
-export function CRMNav() {
+export function CRMNav({ full = false }: { full?: boolean }) {
   const path = usePathname();
   return (
     <nav className="crm-nav" aria-label="CRM">
-      {links.map(([href, label]) => {
+      {links.filter(([, , need]) => need !== "full" || full).map(([href, label]) => {
         const current = href === "/crm" ? path === "/crm" : path.startsWith(href);
         return (
           <Link key={href} href={href} aria-current={current ? "page" : undefined}>
@@ -60,7 +65,10 @@ const STAGES: [string, string][] = [
   ["lead", "Piste"], ["qualified", "Qualifiée"], ["proposal", "Proposition envoyée"],
   ["negotiation", "Négociation"], ["won", "Gagnée"], ["lost", "Perdue"],
 ];
-export function DragBoard({ children }: { children: React.ReactNode }) {
+// Also used by the companies board of /crm/suivi with its own stages.
+export function DragBoard({ children, stages = STAGES, lostConfirm = "Marquer cette opportunité comme perdue ?" }: {
+  children: React.ReactNode; stages?: readonly (readonly [string, string])[]; lostConfirm?: string;
+}) {
   const root = useRef<HTMLDivElement>(null);
   const live = useRef<HTMLParagraphElement>(null);
   const picked = useRef<{ card: HTMLElement; index: number } | null>(null);
@@ -74,7 +82,7 @@ export function DragBoard({ children }: { children: React.ReactNode }) {
     const form = card?.querySelector<HTMLFormElement>("form");
     const select = form?.querySelector<HTMLSelectElement>("select[name=stage]");
     if (!card || !form || !select || !stage || select.value === stage) return false;
-    if (stage === "lost" && !window.confirm("Marquer cette opportunité comme perdue ?")) return false;
+    if (stage === "lost" && !window.confirm(lostConfirm)) return false;
     select.value = stage;
     card.classList.add("is-moving");
     form.requestSubmit();
@@ -127,26 +135,26 @@ export function DragBoard({ children }: { children: React.ReactNode }) {
     const p = picked.current;
     if (!p && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
-      const index = Math.max(0, STAGES.findIndex(([v]) => v === stageOf(card)));
+      const index = Math.max(0, stages.findIndex(([v]) => v === stageOf(card)));
       picked.current = { card, index };
       card.classList.add("is-dragging");
-      mark(zoneFor(STAGES[index][0]));
-      say(`Opportunité saisie, colonne ${STAGES[index][1]}. Flèches pour choisir la colonne, Entrée pour déposer, Échap pour annuler.`);
+      mark(zoneFor(stages[index][0]));
+      say(`Carte saisie, colonne ${stages[index][1]}. Flèches pour choisir la colonne, Entrée pour déposer, Échap pour annuler.`);
       return;
     }
     if (!p || p.card !== card) return;
     if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(e.key)) {
       e.preventDefault();
-      p.index = (p.index + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : STAGES.length - 1)) % STAGES.length;
-      mark(zoneFor(STAGES[p.index][0]));
-      say(STAGES[p.index][1]);
+      p.index = (p.index + (e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : stages.length - 1)) % stages.length;
+      mark(zoneFor(stages[p.index][0]));
+      say(stages[p.index][1]);
     } else if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
       e.preventDefault();
       picked.current = null;
       card.classList.remove("is-dragging");
-      const moved = e.key !== "Escape" && drop(card, STAGES[p.index][0]);
+      const moved = e.key !== "Escape" && drop(card, stages[p.index][0]);
       if (!moved) mark(null);
-      say(moved ? `Déplacée vers ${STAGES[p.index][1]}.` : "Déplacement annulé.");
+      say(moved ? `Déplacée vers ${stages[p.index][1]}.` : "Déplacement annulé.");
     }
   };
   return (

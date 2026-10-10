@@ -2,14 +2,14 @@
 import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { relationID } from "@/lib/access";
-import { activityKinds, creditStatuses, dealStages, defaultProbability, defaultVatRate, depositLines, documentKindLabel, documentKinds, isOpenStage, money, quoteStatuses, invoiceStatuses } from "@/lib/crm";
+import { activeProspectStages, activityKinds, creditStatuses, dealStages, defaultProbability, defaultVatRate, depositLines, documentKindLabel, documentKinds, exchangeKinds, isActiveProspect, isOpenStage, lostReasons, money, prospectStageLabel, prospectStageOf, prospectStages, quoteStatuses, invoiceStatuses } from "@/lib/crm";
 import { contactSMTPTransport } from "@/lib/contact-smtp";
 import { contactDetails } from "@/lib/contact-details";
 import { crmEmailEnabled } from "@/lib/crm-reminders";
 import { documentFilename, documentPDF } from "@/lib/crm-pdf";
 import { sendDocumentMail } from "@/lib/crm-document-mail";
 import { database } from "@/lib/database";
-import { topicLabel } from "@/lib/contact-topics";
+import { topicLabel, topics } from "@/lib/contact-topics";
 import { as, crmContext, safeBack, withMessage, type CRMContext } from "@/lib/crm-server";
 import { clientSchema, id, optionalEmail, optionalID, text, values } from "@/lib/crm-schema";
 import { commitTransaction, createLocalReq, initTransaction, killTransaction } from "payload";
@@ -26,6 +26,11 @@ const optionalDate = z.preprocess(
 ).transform((d) => (d && !isNaN(+d) ? d.toISOString() : null));
 const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
 const form = (data: FormData) => Object.fromEntries([...data.keys()].map((k) => [k, data.get(k)]));
+// contact_requests.topic est une colonne texte : une valeur inconnue n'entre pas
+// dans les besoins d'une entreprise.
+type Need = (typeof topics)[number][0];
+const knownNeed = (topic: unknown): Need[] =>
+  topics.some(([t]) => t === topic) ? [topic as Need] : [];
 class UserError extends Error {}
 // Runs the change, then redirects with a flash message. Validation and Payload
 // errors come back as readable text, never as an error page.
@@ -58,33 +63,42 @@ async function run(data: FormData, fallback: string, work: (ctx: CRMContext) => 
   redirect(destination);
 }
 export async function saveClient(data: FormData) {
+  let message = "Entreprise enregistrée.";
   await run(data, "/crm/clients", async (ctx) => {
-    const fields = clientSchema.parse(form(data));
+    // Les besoins arrivent en plusieurs valeurs sous le même nom : form() n'en garderait
+    // qu'une seule, d'où le getAll explicite.
+    const fields = clientSchema.parse({ ...form(data), needs: data.getAll("needs") });
     const existing = optionalID.parse(data.get("id"));
-    if (existing) {
-      await ctx.payload.update({ collection: "clients", id: existing, data: fields, ...as(ctx) });
-      return;
-    }
-    const doc = await ctx.payload.create({ collection: "clients", data: fields, ...as(ctx) });
-    return `/crm/clients/${doc.id}`;
-  }, "Entreprise enregistrée.");
+    const saved = existing
+      ? await ctx.payload.update({ collection: "clients", id: existing, data: fields, ...as(ctx) })
+      : await ctx.payload.create({ collection: "clients", data: fields, ...as(ctx) });
+    // Same alert as the board and the company page (see missingNextAction in lib/crm.ts):
+    // an active company with no dated action is signalled, never refused.
+    if (isActiveProspect(saved.pipeline) && !(await plannedActions(ctx, saved.id as number)))
+      message += " Aucune action prévue : planifiez la suivante.";
+    return existing ? undefined : `/crm/clients/${saved.id}`;
+  }, () => message);
 }
 export async function deleteClient(data: FormData) {
   await run(data, "/crm/clients", async (ctx) => {
     const client = id.parse(data.get("id"));
     const where = { client: { equals: client } };
+    // Counted with full rights: a CRM-only account does not see Support data, but the guard must.
     const [accounts, tickets] = await Promise.all([
-      ctx.payload.count({ collection: "client-accounts", where, ...as(ctx) }),
-      ctx.payload.count({ collection: "tickets", where, ...as(ctx) }),
+      ctx.payload.count({ collection: "client-accounts", where, overrideAccess: true }),
+      ctx.payload.count({ collection: "tickets", where, overrideAccess: true }),
     ]);
     if (accounts.totalDocs || tickets.totalDocs)
       throw new UserError("Suppression impossible : cette entreprise a des utilisateurs ou tickets Support. Passez-la en « Ancien client ».");
     const numbered = await ctx.payload.count({ collection: "crm-documents", where: { ...where, number: { exists: true } }, ...as(ctx) });
     if (numbered.totalDocs)
       throw new UserError("Suppression impossible : cette entreprise a des devis ou factures numérotés. Passez-la en « Ancien client ».");
-    // Children first: their client column is NOT NULL.
-    for (const collection of ["crm-documents", "crm-activities", "crm-deals", "crm-contacts"] as const)
-      await ctx.payload.delete({ collection, where, ...as(ctx) });
+    // Children first: their client column is NOT NULL. One by one: a bulk delete
+    // reports a failed document in its result instead of throwing.
+    for (const collection of ["crm-documents", "crm-activities", "crm-deals", "crm-contacts"] as const) {
+      const { docs } = await ctx.payload.find({ collection, where, pagination: false, depth: 0, ...as(ctx) });
+      for (const doc of docs) await ctx.payload.delete({ collection, id: doc.id, ...as(ctx) });
+    }
     await ctx.payload.delete({ collection: "clients", id: client, ...as(ctx) });
     return "/crm/clients";
   }, "Entreprise supprimée avec ses contacts, opportunités et activités.");
@@ -133,12 +147,13 @@ export async function importClients(data: FormData) {
     const work = plan.rows.filter((r) => r.action === "create" || r.action === "complete");
     if (!work.length) throw new UserError("Rien à importer : aucune ligne à créer ou à compléter.");
     const owner = checkbox.parse(data.get("owner")) ? (ctx.user.id as number) : null;
+    const created: number[] = [];
     const req = await createLocalReq({ user: ctx.user }, ctx.payload);
     await initTransaction(req);
     try {
       for (const row of work) {
         try {
-          if (row.action === "create") await ctx.payload.create({ collection: "clients", data: { ...row.data!, owner }, req, overrideAccess: false });
+          if (row.action === "create") created.push((await ctx.payload.create({ collection: "clients", data: { ...row.data!, owner }, req, overrideAccess: false })).id as number);
           else await ctx.payload.update({ collection: "clients", id: row.target!.id, data: row.fill!, req, overrideAccess: false });
         } catch (error) {
           console.error("crm import row", row.line, error);
@@ -151,10 +166,20 @@ export async function importClients(data: FormData) {
       throw error;
     }
     const c = plan.counts;
+    // Imported companies start active without any action: say so instead of staying silent
+    // (same alert as the board and the company page, see missingNextAction in lib/crm.ts).
+    const unplanned = created.length
+      ? await ctx.payload.count({
+          collection: "clients",
+          where: { and: [{ pipeline: { in: [...activeProspectStages] } }, { id: { in: created } }] },
+          ...as(ctx),
+        })
+      : { totalDocs: 0 };
     summary = [`Import terminé : ${c.create} entreprise${c.create > 1 ? "s" : ""} créée${c.create > 1 ? "s" : ""}`,
       c.complete && `${c.complete} complétée${c.complete > 1 ? "s" : ""}`,
       c.skip && `${c.skip} ignorée${c.skip > 1 ? "s" : ""} (déjà présentes)`,
-      c.error && `${c.error} ligne${c.error > 1 ? "s" : ""} en erreur non importée${c.error > 1 ? "s" : ""}`].filter(Boolean).join(", ") + ".";
+      c.error && `${c.error} ligne${c.error > 1 ? "s" : ""} en erreur non importée${c.error > 1 ? "s" : ""}`].filter(Boolean).join(", ") + "."
+      + (unplanned.totalDocs ? ` ${unplanned.totalDocs} entreprise${unplanned.totalDocs > 1 ? "s" : ""} sans prochaine action : à planifier sur le suivi commercial.` : "");
     return "/crm/clients?tri=recent";
   }, () => summary);
 }
@@ -273,15 +298,110 @@ export async function saveActivity(data: FormData) {
     });
   }, data.get("id") ? "Activité modifiée." : "Activité ajoutée.");
 }
+// Open dated actions of a company (its "next actions"), optionally without one of them.
+async function plannedActions(ctx: CRMContext, client: number, except?: number | null) {
+  const { totalDocs } = await ctx.payload.count({
+    collection: "crm-activities",
+    where: { client: { equals: client }, done: { equals: false }, dueAt: { exists: true }, ...(except ? { id: { not_equals: except } } : {}) },
+    ...as(ctx),
+  });
+  return totalDocs;
+}
 export async function toggleActivity(data: FormData) {
+  let message = "Tâche mise à jour.";
   await run(data, "/crm/taches", async (ctx) => {
-    await ctx.payload.update({
-      collection: "crm-activities",
-      id: id.parse(data.get("id")),
-      data: { done: checkbox.parse(data.get("done")) },
-      ...as(ctx),
-    });
-  }, "Tâche mise à jour.");
+    const done = checkbox.parse(data.get("done"));
+    const doc = await ctx.payload.update({ collection: "crm-activities", id: id.parse(data.get("id")), data: { done }, depth: 1, ...as(ctx) });
+    // The last planned action of a company in progress is done: ask for the next one.
+    const client = doc.client && typeof doc.client === "object" ? doc.client : null;
+    if (done && client && isActiveProspect(client.pipeline) && !(await plannedActions(ctx, client.id))) {
+      message = "Action terminée. Notez le résultat et planifiez la prochaine action.";
+      return `/crm/clients/${client.id}#suivi`;
+    }
+  }, () => message);
+}
+// One form for the daily follow-up of a company: what happened (or the planned action
+// now done), its commercial stage, and the next action. A company still in progress
+// always keeps a dated next action with someone in charge.
+const nextKinds = activityKinds.filter(([v]) => v !== "note");
+const followUpSchema = z.object({
+  client: id,
+  close: optionalID,
+  kind: z.enum(values(activityKinds)).default("call"),
+  subject: text(200),
+  details: text(10000),
+  contact: optionalID,
+  pipeline: z.enum(values(prospectStages)),
+  lostReason: z.preprocess((v) => v || null, z.enum(values(lostReasons)).nullable()),
+  nextKind: z.enum(values(nextKinds)).default("call"),
+  nextSubject: text(200),
+  nextDueAt: optionalDate,
+  nextAssignee: optionalID,
+});
+export async function recordFollowUp(data: FormData) {
+  const done: string[] = [];
+  await run(data, "/crm", async (ctx) => {
+    const f = followUpSchema.parse(form(data));
+    const client = await ctx.payload.findByID({ collection: "clients", id: f.client, depth: 0, ...as(ctx) });
+    const current = prospectStageOf(client.pipeline);
+    const closing = f.close ? await ctx.payload.findByID({ collection: "crm-activities", id: f.close, depth: 0, ...as(ctx) }) : null;
+    if (closing && String(relationID(closing.client)) !== String(client.id)) throw new UserError("Cette action appartient à une autre entreprise.");
+    const exchanged = (exchangeKinds as readonly string[]).includes(closing?.kind ?? (f.subject ? f.kind : ""));
+    // A first exchange takes the company out of "À contacter" unless another stage was chosen.
+    const pipeline = f.pipeline === current && current === "to-contact" && exchanged ? "contacted" : f.pipeline;
+    if (pipeline === "lost" && !f.lostReason) throw new UserError("Indiquez la raison de la perte.");
+    if (isActiveProspect(pipeline) && !f.nextDueAt && !(await plannedActions(ctx, client.id, closing?.id)))
+      throw new UserError("Planifiez la prochaine action (date et responsable), ou classez l’entreprise en « Gagné » ou « Perdu ».");
+    if (closing) {
+      const report = [closing.details, f.subject && `Compte rendu : ${f.subject}`, f.details].filter(Boolean).join("\n\n").slice(0, 10000);
+      await ctx.payload.update({ collection: "crm-activities", id: closing.id, data: { done: true, details: report || null }, ...as(ctx) });
+      done.push("action terminée");
+    } else if (f.subject) {
+      await ctx.payload.create({
+        collection: "crm-activities",
+        data: { kind: f.kind, subject: f.subject, details: f.details, client: client.id, contact: f.contact, done: true },
+        ...as(ctx),
+      });
+      done.push("échange noté");
+    }
+    if (pipeline !== current || (pipeline === "lost" && f.lostReason !== client.lostReason)) {
+      await ctx.payload.update({ collection: "clients", id: client.id, data: { pipeline, lostReason: pipeline === "lost" ? f.lostReason : null }, ...as(ctx) });
+      done.push(`étape « ${prospectStageLabel(pipeline)} »`);
+    }
+    if (f.nextDueAt) {
+      await ctx.payload.create({
+        collection: "crm-activities",
+        data: {
+          kind: f.nextKind,
+          subject: f.nextSubject || `Relancer ${client.name}`.slice(0, 200),
+          client: client.id,
+          contact: f.contact,
+          dueAt: f.nextDueAt,
+          assignee: f.nextAssignee ?? (relationID(client.owner) as number | null) ?? (ctx.user.id as number),
+          done: false,
+        },
+        ...as(ctx),
+      });
+      done.push("prochaine action planifiée");
+    }
+    if (!done.length) throw new UserError("Rien à enregistrer.");
+  }, () => `Suivi enregistré : ${done.join(", ")}.`);
+}
+// Board of /crm/suivi: same rules as the follow-up form for a loss (its reason is
+// chosen on the company page).
+export async function moveProspect(data: FormData) {
+  let message = "Étape mise à jour.";
+  await run(data, "/crm/suivi", async (ctx) => {
+    const stage = z.enum(values(prospectStages)).parse(data.get("stage"));
+    const client = await ctx.payload.findByID({ collection: "clients", id: id.parse(data.get("id")), depth: 0, ...as(ctx) });
+    if (stage === "lost") {
+      message = `Choisissez la raison de la perte de ${client.name}, puis enregistrez.`;
+      return `/crm/clients/${client.id}?etape=lost#suivi`;
+    }
+    await ctx.payload.update({ collection: "clients", id: client.id, data: { pipeline: stage }, ...as(ctx) });
+    message = `${client.name} : « ${prospectStageLabel(stage)} ».`;
+    if (isActiveProspect(stage) && !(await plannedActions(ctx, client.id))) message += " Aucune action prévue : planifiez la suivante.";
+  }, () => message);
 }
 export async function deleteActivity(data: FormData) {
   await run(data, "/crm/taches", async (ctx) => {
@@ -316,14 +436,29 @@ export async function convertRequest(data: FormData) {
           data: {
             name: (request.company || request.name).slice(0, 160),
             stage: "prospect",
+            pipeline: "engaged",
             source: "site-web",
             sourceRequest: request.id,
+            // Le sujet choisi par le visiteur est le premier besoin connu de l'entreprise.
+            // topic est stocké en texte libre : on ne garde que les sujets connus.
+            needs: knownNeed(request.topic),
             email: request.company ? null : request.email,
             phone: request.company ? null : request.phone || null,
             owner: ctx.user.id as number,
           },
           ...as(ctx),
         });
+    // Entreprise existante : le sujet de la demande complète ses besoins connus, sans
+    // jamais remplacer ceux déjà saisis.
+    const known = (client.needs ?? []) as string[];
+    const added = knownNeed(request.topic).filter((n) => !known.includes(n));
+    if (target && added.length)
+      await ctx.payload.update({
+        collection: "clients",
+        id: client.id,
+        data: { needs: [...known, ...added] as typeof client.needs },
+        ...as(ctx),
+      });
     const existing = await ctx.payload.find({
       collection: "crm-contacts",
       where: { client: { equals: client.id }, email: { equals: request.email.toLowerCase() } },
@@ -359,6 +494,23 @@ export async function convertRequest(data: FormData) {
         deal,
         request: request.id,
         done: true,
+      },
+      ...as(ctx),
+    });
+    // The company wrote to us: the exchange is engaged, and answering it is the next action.
+    if (target && ["to-contact", "contacted", "on-hold"].includes(prospectStageOf(client.pipeline)))
+      await ctx.payload.update({ collection: "clients", id: client.id, data: { pipeline: "engaged" }, ...as(ctx) });
+    await ctx.payload.create({
+      collection: "crm-activities",
+      data: {
+        kind: "call",
+        subject: `Répondre à la demande de ${request.name}`.slice(0, 200),
+        client: client.id,
+        contact: contact.id,
+        deal,
+        dueAt: new Date().toISOString(),
+        assignee: ctx.user.id as number,
+        done: false,
       },
       ...as(ctx),
     });
@@ -562,6 +714,7 @@ const mailSchema = z.object({
 });
 export async function emailDocument(data: FormData) {
   await run(data, docPage(data), async (ctx) => {
+    if (!ctx.full) throw new UserError("Envoi des documents réservé à un administrateur complet.");
     if (!crmEmailEnabled()) throw new UserError("L’envoi d’emails n’est pas activé sur ce serveur : téléchargez le PDF et envoyez-le vous-même.");
     const docID = id.parse(data.get("id"));
     const mail = mailSchema.parse(form(data));

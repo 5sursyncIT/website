@@ -181,6 +181,11 @@ export interface ContactRequest {
   email: string;
   phone?: string | null;
   topic: string;
+  service?: string | null;
+  /**
+   * Service consulté avant l’envoi du formulaire.
+   */
+  serviceLabel?: string | null;
   topicLabel?: string | null;
   message: string;
   notification?: ('not-configured' | 'pending' | 'sent' | 'failed') | null;
@@ -220,6 +225,21 @@ export interface Client {
   id: number;
   name: string;
   stage: 'prospect' | 'client' | 'inactive';
+  /**
+   * Suivi commercial : /crm/suivi.
+   */
+  pipeline?:
+    ('to-contact' | 'contacted' | 'engaged' | 'need' | 'meeting' | 'quote' | 'on-hold' | 'won' | 'lost') | null;
+  lostReason?: ('budget' | 'no-need' | 'competitor' | 'price' | 'no-answer' | 'timing' | 'other') | null;
+  pipelineAt?: string | null;
+  /**
+   * Ce que l’entreprise demande. Repris dans les indicateurs commerciaux.
+   */
+  needs?: ('reseaux-cloud' | 'solutions-metier' | 'developpement-api' | 'maintenance-support' | 'autre')[] | null;
+  /**
+   * Contexte, périmètre, contraintes : ce qui ne tient pas dans les cases ci-dessus.
+   */
+  needsDetail?: string | null;
   owner?: (number | null) | Admin;
   source?: ('site-web' | 'recommandation' | 'prospection' | 'appel-offres' | 'partenaire' | 'salon' | 'autre') | null;
   sourceRequest?: (number | null) | ContactRequest;
@@ -243,6 +263,10 @@ export interface Client {
 export interface Admin {
   id: number;
   name: string;
+  /**
+   * Complet : tout. CRM : /crm seulement (devis et factures en brouillon). Technicien : tickets Support seulement. Modifiable seulement par un gestionnaire des comptes, jamais sur son propre compte.
+   */
+  role: 'full' | 'crm' | 'technician';
   /**
    * Lecture, brouillons, envoi. Modifiable seulement par un gestionnaire des comptes, jamais sur son propre compte.
    */
@@ -355,7 +379,7 @@ export interface CrmDocument {
 export interface CrmActivity {
   id: number;
   searchText?: string | null;
-  kind: 'call' | 'email' | 'meeting' | 'note' | 'task';
+  kind: 'call' | 'email' | 'whatsapp' | 'meeting' | 'note' | 'task';
   subject: string;
   details?: string | null;
   client: number | Client;
@@ -394,6 +418,10 @@ export interface Ticket {
       };
   subject: string;
   category: 'reseaux-cloud' | 'solutions-metier' | 'developpement-api' | 'maintenance-support' | 'autre';
+  /**
+   * Tri des tickets sur l’accueil du CRM.
+   */
+  priority: 'urgent' | 'high' | 'normal' | 'low';
   description: string;
   status: 'open' | 'in-progress' | 'waiting-client' | 'resolved' | 'closed';
   updatedAt: string;
@@ -502,7 +530,7 @@ export interface Page {
         /**
          * Mission Afrique : laisser vide pour ne rien afficher. Les autres textes sont obligatoires.
          */
-        value: string;
+        value?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -735,6 +763,8 @@ export interface ContactRequestsSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   topic?: T;
+  service?: T;
+  serviceLabel?: T;
   topicLabel?: T;
   message?: T;
   notification?: T;
@@ -858,6 +888,7 @@ export interface TicketsSelect<T extends boolean = true> {
   author?: T;
   subject?: T;
   category?: T;
+  priority?: T;
   description?: T;
   status?: T;
   updatedAt?: T;
@@ -906,6 +937,11 @@ export interface TicketFilesSelect<T extends boolean = true> {
 export interface ClientsSelect<T extends boolean = true> {
   name?: T;
   stage?: T;
+  pipeline?: T;
+  lostReason?: T;
+  pipelineAt?: T;
+  needs?: T;
+  needsDetail?: T;
   owner?: T;
   source?: T;
   sourceRequest?: T;
@@ -1032,6 +1068,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface AdminsSelect<T extends boolean = true> {
   name?: T;
+  role?: T;
   mailAccess?: T;
   manageAdmins?: T;
   updatedAt?: T;

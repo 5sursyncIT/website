@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { clientSources, clientStages } from "@/lib/crm";
+import { topics } from "@/lib/contact-topics";
+import { clientSources, clientStages, lostReasons, prospectStages } from "@/lib/crm";
 // Form rules shared by the server actions and the CSV import: a company imported
 // from a file is validated exactly like one typed in /crm/clients/nouveau.
 export const values = <T extends readonly (readonly [string, ...unknown[]])[]>(list: T) =>
@@ -15,6 +16,9 @@ export const website = z.preprocess(
 export const clientSchema = z.object({
   name: z.string().trim().min(1, "Nom de l’entreprise requis.").max(160),
   stage: z.enum(values(clientStages)),
+  // Absent (CSV import, older forms): the stored stage is kept, or the default applies.
+  pipeline: z.enum(values(prospectStages)).optional(),
+  lostReason: z.preprocess((v) => v || null, z.enum(values(lostReasons)).nullable()).optional(),
   source: z.preprocess((v) => v || null, z.enum(values(clientSources)).nullable()),
   owner: optionalID,
   sector: text(80),
@@ -26,5 +30,8 @@ export const clientSchema = z.object({
   city: text(80),
   country: text(60),
   notes: text(5000),
+  // Cases à cocher : plusieurs valeurs sous le même nom, lues par getAll() côté action.
+  needs: z.array(z.enum(values(topics))).default([]),
+  needsDetail: text(2000),
 });
 export type ClientFields = z.infer<typeof clientSchema>;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Admin, Client, CrmActivity, CrmContact, CrmDeal, CrmDocument } from "@/payload-types";
 import { relationID } from "@/lib/access";
+import { topics } from "@/lib/contact-topics";
 import {
   activityKindLabel,
   activityKinds,
@@ -13,10 +14,13 @@ import {
   documentKindLabel,
   documentStatusLabel,
   lineTotal,
+  lostReasons,
   money,
+  prospectStageLabel,
+  prospectStages,
 } from "@/lib/crm";
 import { dateInputValue, dateTimeInputValue, formatDate, formatDateTime } from "@/lib/crm-server";
-import { deleteActivity, saveActivity, saveClient, saveContact, saveDeal, saveDocument, toggleActivity } from "@/app/(crm)/crm/actions";
+import { deleteActivity, recordFollowUp, saveActivity, saveClient, saveContact, saveDeal, saveDocument, toggleActivity } from "@/app/(crm)/crm/actions";
 import { Submit } from "./client";
 // Server-rendered building blocks shared by the /crm pages.
 type Search = Record<string, string | string[] | undefined>;
@@ -51,6 +55,10 @@ export const ClientStage = ({ stage }: { stage?: string | null }) => (
 );
 export const DealStage = ({ stage }: { stage?: string | null }) => (
   <span className={`crm-badge crm-badge--${stageTone[stage ?? ""] ?? "info"}`}>{dealStageLabel(stage)}</span>
+);
+const prospectTone: Record<string, string> = { won: "ok", lost: "off", "on-hold": "wait", "to-contact": "wait" };
+export const ProspectStage = ({ stage }: { stage?: string | null }) => (
+  <span className={`crm-badge crm-badge--${prospectTone[stage ?? "to-contact"] ?? "info"}`}>{prospectStageLabel(stage)}</span>
 );
 export function Pager({ page, totalPages, base, search }: { page: number; totalPages: number; base: string; search: Search }) {
   if (totalPages <= 1) return null;
@@ -102,6 +110,8 @@ export function ClientForm({ client, admins, back }: { client?: Client; admins: 
           <input name="name" required maxLength={160} defaultValue={client?.name} />
         </label>
         <Select label="Statut commercial" name="stage" value={client?.stage ?? "prospect"} options={list(clientStages)} />
+        <Select label="Étape commerciale" name="pipeline" value={client?.pipeline ?? "to-contact"} options={list(prospectStages)} />
+        <Select label="Raison de la perte (si perdu)" name="lostReason" value={client?.lostReason} options={list(lostReasons)} empty="—" />
         <Select label="Origine" name="source" value={client?.source} options={list(clientSources)} empty="Non renseignée" />
         <Select label="Responsable" name="owner" value={relationID(client?.owner)} options={people(admins)} empty="Personne" />
         <label>Secteur d’activité<input name="sector" maxLength={80} defaultValue={client?.sector ?? ""} /></label>
@@ -112,6 +122,16 @@ export function ClientForm({ client, admins, back }: { client?: Client; admins: 
         <label className="crm-span-2">Adresse<input name="address" maxLength={200} defaultValue={client?.address ?? ""} /></label>
         <label>Ville<input name="city" maxLength={80} defaultValue={client?.city ?? ""} /></label>
         <label>Pays<input name="country" maxLength={60} defaultValue={client?.country ?? (client ? "" : "Sénégal")} /></label>
+        <fieldset className="crm-span-all crm-checks">
+          <legend>Besoins et services demandés</legend>
+          {topics.map(([value, label]) => (
+            <label key={value} className="crm-check">
+              <input type="checkbox" name="needs" value={value} defaultChecked={(client?.needs ?? []).includes(value)} />
+              {label}
+            </label>
+          ))}
+        </fieldset>
+        <label className="crm-span-all">Détail du besoin<textarea name="needsDetail" rows={3} maxLength={2000} defaultValue={client?.needsDetail ?? ""} placeholder="Contexte, périmètre, contraintes…" /></label>
         <label className="crm-span-all">Notes<textarea name="notes" rows={4} maxLength={5000} defaultValue={client?.notes ?? ""} /></label>
       </div>
       <Submit>{client ? "Enregistrer les modifications" : "Créer l’entreprise"}</Submit>
@@ -200,6 +220,76 @@ export function ActivityForm({ activity, clientID, dealID, clients, contacts, ad
       </div>
       {!activity && <p className="crm-hint">Sans échéance, un appel, email, rendez-vous ou note est enregistré comme déjà fait ; une tâche reste à faire.</p>}
       <Submit>{activity ? "Enregistrer les modifications" : "Ajouter"}</Submit>
+    </form>
+  );
+}
+// Default date of a new next action: tomorrow 09:00 (Dakar = UTC).
+const tomorrowNine = () => {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 9)).toISOString().slice(0, 16);
+};
+const nextKindOptions = list(activityKinds.filter(([v]) => v !== "note"));
+// Daily follow-up of a company: what happened, its stage, the next action (recordFollowUp).
+export function FollowUpForm({ client, planned, contacts, admins, me, back, close, stage }: {
+  client: Client; planned: CrmActivity[]; contacts: ContactOption[]; admins: Admin[]; me: number; back: string; close?: number | null; stage?: string;
+}) {
+  const owner = relationID(client.owner) ?? me;
+  return (
+    <form action={recordFollowUp} className="crm-form crm-followup">
+      <input type="hidden" name="client" value={client.id} />
+      <input type="hidden" name="back" value={back} />
+      <fieldset>
+        <legend>1. Ce qui s’est passé</legend>
+        <div className="crm-grid">
+          {planned.length > 0 && (
+            <Select label="Action prévue maintenant faite" name="close" value={close ?? ""} empty="Aucune : nouvel échange"
+              options={planned.map((a) => ({ value: a.id, label: `${activityKindLabel(a.kind)} · ${a.subject} (${formatDate(a.dueAt)})` }))} />
+          )}
+          <Select label="Type d’échange" name="kind" value="call" options={list(activityKinds.filter(([v]) => v !== "task"))} />
+          <label className="crm-span-2">Résumé<input name="subject" maxLength={200} placeholder="Ex. Pas joignable · Intéressé par la sauvegarde · Budget en janvier" /></label>
+          {contacts.length > 0 && (
+            <Select label="Avec" name="contact" empty="—" options={contacts.map((c) => ({ value: c.id, label: c.name }))} />
+          )}
+          <label className="crm-span-all">Détails (besoins exprimés, interlocuteurs, notes WhatsApp…)<textarea name="details" rows={3} maxLength={10000} /></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>2. Étape commerciale</legend>
+        <div className="crm-grid">
+          <Select label="Étape" name="pipeline" value={stage ?? client.pipeline ?? "to-contact"} options={list(prospectStages)} />
+          <Select label="Raison de la perte (si perdu)" name="lostReason" value={client.lostReason} options={list(lostReasons)} empty="—" />
+        </div>
+        <p className="crm-hint">Un premier échange fait passer « À contacter » à « Contacté, sans réponse » si vous ne choisissez pas une autre étape.</p>
+      </fieldset>
+      <fieldset>
+        <legend>3. Prochaine action</legend>
+        <div className="crm-grid">
+          <Select label="Type" name="nextKind" value="call" options={nextKindOptions} />
+          <label className="crm-span-2">Objet<input name="nextSubject" maxLength={200} placeholder={`Relancer ${client.name}`} /></label>
+          <label>Date et heure<input name="nextDueAt" type="datetime-local" defaultValue={planned.length ? "" : tomorrowNine()} /></label>
+          <Select label="Responsable" name="nextAssignee" value={owner} options={people(admins)} />
+        </div>
+        <p className="crm-hint">Obligatoire tant que l’entreprise n’est ni « Gagné » ni « Perdu » (sauf si une autre action reste prévue). Laissez la date vide pour ne rien planifier.</p>
+      </fieldset>
+      <Submit>Enregistrer le suivi</Submit>
+    </form>
+  );
+}
+// One-line planning of the next action (home page, companies without one).
+export function QuickPlan({ client, admins, me, back }: { client: Pick<Client, "id" | "name" | "pipeline" | "owner">; admins: Admin[]; me: number; back: string }) {
+  return (
+    <form action={recordFollowUp} className="crm-quickplan">
+      <input type="hidden" name="client" value={client.id} />
+      <input type="hidden" name="back" value={back} />
+      <input type="hidden" name="pipeline" value={client.pipeline ?? "to-contact"} />
+      <select name="nextKind" defaultValue="call" aria-label={`Type d’action pour ${client.name}`}>
+        {nextKindOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <input name="nextDueAt" type="datetime-local" required defaultValue={tomorrowNine()} aria-label={`Date de l’action pour ${client.name}`} />
+      <select name="nextAssignee" defaultValue={relationID(client.owner) ?? me} aria-label={`Responsable de l’action pour ${client.name}`}>
+        {people(admins).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <Submit className="crm-btn crm-btn--small">Planifier</Submit>
     </form>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { serviceValues } from "@/lib/contact-topics";
 export const categories = [
   "reseaux-cloud",
   "solutions-metier",
@@ -14,6 +15,9 @@ export const contactSchema = z
     phone: z.string().trim().max(40).default(""),
     topic: z.enum(categories),
     message: z.string().trim().min(10).max(3000),
+    // Service page the visitor came from, when there is one. Bounded to the known
+    // slugs: never free text from the browser.
+    service: z.preprocess((v) => v || "", z.enum(["", ...serviceValues] as [string, ...string[]])).default(""),
     website: z.string().max(0).default(""),
   })
   .strict();

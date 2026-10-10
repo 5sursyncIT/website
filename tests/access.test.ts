@@ -77,3 +77,23 @@ test("file validation rejects forged MIME, HTML/SVG, path traversal and oversize
   ] as const)
     assert.throws(() => validateFile(data, mime, name));
 });
+
+test("back-office profiles: full, CRM only, technician; unknown profile has no right", async () => {
+  const { staffRole, isFullAdmin, canUseCRM, isTicketStaff, adminOnly, crmOnly, ticketStaffOnly } = await import("../src/lib/access");
+  const full = { id: 1, collection: "admins", role: "full" };
+  const crm = { id: 2, collection: "admins", role: "crm" };
+  const tech = { id: 3, collection: "admins", role: "technician" };
+  const none = { id: 4, collection: "admins" };
+  const req = (user: unknown) => ({ req: { user } }) as never;
+  assert.deepEqual([full, crm, tech, none].map(staffRole), ["full", "crm", "technician", null]);
+  assert.deepEqual([full, crm, tech, none, a].map(isFullAdmin), [true, false, false, false, false]);
+  assert.deepEqual([full, crm, tech, none, a].map(canUseCRM), [true, true, false, false, false]);
+  assert.deepEqual([full, crm, tech, none, a].map(isTicketStaff), [true, false, true, false, false]);
+  assert.deepEqual([full, crm, tech].map((u) => [adminOnly(req(u)), crmOnly(req(u)), ticketStaffOnly(req(u))]),
+    [[true, true, true], [false, true, false], [false, false, true]]);
+  // Support data: the ticket team sees everything, a CRM-only account nothing, a client its company.
+  assert.equal(tenantRead(req(tech)), true);
+  assert.equal(tenantRead(req(crm)), false);
+  assert.deepEqual(tenantRead(req(a)), { client: { equals: 10 } });
+  assert.equal(owns(crm, { client: 10 }), false);
+});

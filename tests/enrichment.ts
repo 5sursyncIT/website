@@ -33,7 +33,7 @@ try {
   const first=run();assert.equal(first.createdHistoricalCases,5);assert.ok(first.addedPageKeys>0);checks++;
   const second=run();assert.equal(second.addedPageKeys,0);assert.equal(second.updatedApprovedValues,0);assert.equal(second.createdHistoricalCases,0);checks++;
   const contact=(await p.find({collection:'pages',where:{slug:{equals:'contact'}},limit:1})).docs[0];
-  const copy=Object.fromEntries(contact.copy!.map(x=>[x.key,x.value]));
+  const copy=Object.fromEntries(contact.copy!.map(x=>[x.key,x.value??'']));
   const details=contactFromCopy(copy);
   assert.deepEqual(details.phones.map(x=>x.href),['tel:+221770972908','tel:+221338057909','tel:+221768813039']);checks++;
   assert.equal(details.email,'contact@5sursync.com');assert.match(details.address,/Résidence El'hadji Oumar Dieng/);checks++;

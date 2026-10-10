@@ -22,9 +22,17 @@ export default async function Support() {
       <p className="eyebrow">Espace client</p>
       <h1>Mes tickets</h1>
       <div className="support-actions">
-        <Link className="button aqua" href="/support/nouveau">
-          Ouvrir un ticket ↗
-        </Link>
+        {clientID(user) === null ? (
+          // An administrator has no company of their own: a ticket opened here would be
+          // refused by the API. Point straight at the administration instead.
+          <a className="button aqua" href="/admin/collections/tickets/create">
+            Créer un ticket dans l’administration ↗
+          </a>
+        ) : (
+          <Link className="button aqua" href="/support/nouveau">
+            Ouvrir un ticket ↗
+          </Link>
+        )}
         <Logout />
       </div>
       {tickets.docs.length ? (

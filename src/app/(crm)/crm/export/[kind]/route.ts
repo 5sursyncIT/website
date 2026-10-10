@@ -1,6 +1,6 @@
 import { as, crmContext } from "@/lib/crm-server";
 import { templateRows } from "@/lib/crm-import";
-import { clientSourceLabel, clientStageLabel, csv, dealStageLabel, documentKindLabel, documentStatusLabel } from "@/lib/crm";
+import { activityKindLabel, clientSourceLabel, clientStageLabel, csv, dealStageLabel, documentKindLabel, documentStatusLabel, lostReasonLabel, prospectStageLabel } from "@/lib/crm";
 // CSV exports for the team (admins only, never cached). Same guard as the pages.
 const name = (doc: unknown) => (doc && typeof doc === "object" && "name" in doc ? String(doc.name ?? "") : "");
 const day = (v: unknown) => (v ? new Date(String(v)).toISOString().slice(0, 10) : "");
@@ -20,10 +20,21 @@ export async function GET(_: Request, { params }: { params: Promise<{ kind: stri
     });
   }
   if (kind === "clients") {
-    const { docs } = await payload.find({ collection: "clients", sort: "name", pagination: false, depth: 1, populate: { admins: { name: true } }, ...as(ctx) });
+    const [{ docs }, planned] = await Promise.all([
+      payload.find({ collection: "clients", sort: "name", pagination: false, depth: 1, populate: { admins: { name: true } }, ...as(ctx) }),
+      payload.find({ collection: "crm-activities", where: { done: { equals: false }, dueAt: { exists: true } }, sort: "dueAt", pagination: false, depth: 0, select: { client: true, kind: true, subject: true, dueAt: true }, ...as(ctx) }),
+    ]);
+    // Soonest open dated action of each company.
+    const next = new Map<unknown, (typeof planned.docs)[number]>();
+    for (const a of planned.docs) if (!next.has(a.client)) next.set(a.client, a);
     rows = [
-      ["Entreprise", "Statut", "Origine", "Secteur", "NINEA/RCCM", "Email", "Téléphone", "Site web", "Adresse", "Ville", "Pays", "Responsable", "Créée le"],
-      ...docs.map((c) => [c.name, clientStageLabel(c.stage), c.source ? clientSourceLabel(c.source) : "", c.sector, c.registration, c.email, c.phone, c.website, c.address, c.city, c.country, name(c.owner), day(c.createdAt)]),
+      // Follow-up columns last: the earlier columns keep their position for existing spreadsheets.
+      ["Entreprise", "Statut", "Origine", "Secteur", "NINEA/RCCM", "Email", "Téléphone", "Site web", "Adresse", "Ville", "Pays", "Responsable", "Créée le", "Étape commerciale", "Raison de la perte", "Prochaine action"],
+      ...docs.map((c) => {
+        const a = next.get(c.id);
+        return [c.name, clientStageLabel(c.stage), c.source ? clientSourceLabel(c.source) : "", c.sector, c.registration, c.email, c.phone, c.website, c.address, c.city, c.country, name(c.owner), day(c.createdAt),
+          prospectStageLabel(c.pipeline), c.lostReason ? lostReasonLabel(c.lostReason) : "", a ? `${day(a.dueAt)} ${activityKindLabel(a.kind)} : ${a.subject}` : ""];
+      }),
     ];
   } else if (kind === "contacts") {
     const { docs } = await payload.find({ collection: "crm-contacts", sort: "name", pagination: false, depth: 1, populate: { clients: { name: true } }, ...as(ctx) });

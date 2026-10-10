@@ -116,6 +116,9 @@ try {
   const fd = st.drafts.find((x: { subject: string }) => x.subject === "Proposition");
   ok(fd && fd.body.includes(phrase) && fd.body.split("sync5-signature").length - 1 === 2 && fd.attachments.includes("sync5-logo"), "draft in contact@ with text, one signature and the inline logo");
   ok(st.sends.length === 0, "saving a draft sent nothing");
+  const fromOf = (graphId: string) => { const m = fake.messages.get(graphId); return [m?.from?.emailAddress.address, m?.sender?.emailAddress.address]; };
+  const d1Row = await store.draft(d1);
+  ok(fromOf(d1Row!.graph_id).every((a) => a === ADDRESS), "new draft: from and sender set to contact@");
   await updateDraft(deps, assistant, d1, { to: "awa@alpha.example.test", subject: "Proposition v2", text: `Bonjour Awa,\n${phrase} (corrigé)` });
   st = await draftState();
   const fd2 = st.drafts.find((x: { subject: string }) => x.subject === "Proposition v2");
@@ -129,6 +132,7 @@ try {
   st = await draftState();
   const fr = st.drafts.find((x: { subject: string }) => x.subject === "RE: Nouveau message");
   ok(fr.body.includes("sync5-quote") && fr.body.split("sync5-signature").length - 1 === 2, "reply body: our text, one signature, quote");
+  ok(fromOf(r!.graph_id).every((a) => a === ADDRESS), "reply draft: from and sender set to contact@");
   fake.editInOutlook(r!.graph_id);
   await refused(updateDraft(deps, assistant, d2, { to: "awa@alpha.example.test", subject: "RE: x", text: "écrase" }), /modifié dans Outlook/, "draft edited in Outlook is never overwritten");
 
@@ -138,8 +142,21 @@ try {
   config.sendAllowlist = ["test@example.test"];
   await refused(sendAuthorizedDraft(deps, owner, d1), /hors de la liste de recette/, "recipient outside the acceptance list refused before any call");
   ok((await draftState()).sends.length === 0, "nothing sent by refused attempts");
+  // Sender checked before any send call: contact@ only, in from and sender.
+  const wrong = await prepareDraft(deps, assistant, { clientId: alpha, contactId: null, to: "test@example.test", subject: "Expéditeur", text: "x" });
+  const wrongId = (await store.draft(wrong))!.graph_id;
+  fake.setFrom(wrongId, "ydiop@5sursync.com", "ydiop@5sursync.com");
+  await refused(sendAuthorizedDraft(deps, owner, wrong), /expéditeur de ce brouillon est ydiop@5sursync\.com, et non contact@/, "other account in From (Outlook): send blocked");
+  fake.setFrom(wrongId, undefined, undefined);
+  await refused(sendAuthorizedDraft(deps, owner, wrong), /n’a pas d’expéditeur/, "no sender on the draft: send blocked");
+  fake.setFrom(wrongId, ADDRESS, "ydiop@5sursync.com");
+  await refused(sendAuthorizedDraft(deps, owner, wrong), /expéditeur réel \(sender\)/, "other account in sender: send blocked");
+  await q(`UPDATE crm_mail.drafts SET graph_id='AAMk-autre-boite' WHERE id=$1`, [wrong]);
+  await refused(sendAuthorizedDraft(deps, owner, wrong), /introuvable dans la boîte contact@/, "draft not in contact@: send blocked");
+  ok((await draftState()).sends.length === 0 && (await store.draft(wrong))?.state === "draft", "blocked sender: nothing sent, draft state unchanged");
   const toTest = await prepareDraft(deps, assistant, { clientId: alpha, contactId: null, to: "test@example.test", subject: "Recette", text: "Test." });
   ok(await sendAuthorizedDraft(deps, owner, toTest) === "accepted", "authorised send: accepted by Microsoft (202)");
+  ok(fromOf((await store.draft(toTest))!.graph_id).every((a) => a === ADDRESS), "sent message: from and sender are contact@");
   await refused(sendAuthorizedDraft(deps, owner, toTest), /pas prêt/, "second click cannot send twice");
   await syncAll(graph, store);
   const sentRow = await store.draft(toTest);

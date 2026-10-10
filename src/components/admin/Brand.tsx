@@ -24,3 +24,15 @@ export function Icon() {
     />
   );
 }
+// Sidebar header, same as the /crm sidebar.
+export function NavBrand() {
+  return (
+    <a className="sync-nav-brand" href="/admin">
+      <img src="/favicon-5.png?v=20261007" alt="" width={32} height={32} />
+      <span>
+        <strong>5/Sync IT</strong>
+        <small>Administration</small>
+      </span>
+    </a>
+  );
+}

@@ -1,0 +1,142 @@
+Audit des six améliorations site / CRM / back-office — 10 octobre 2026, 10:50–10:53 UTC
+
+VERDICT
+Claude n'a pas implémenté et livré les six points dans leur totalité. Le suivi commercial
+et l'accueil quotidien sont solides sur le banc mais non déployés. Formulaire contextualisé,
+indicateurs commerciaux demandés et état système complet restent incomplets ou absents.
+Aucun correctif, déploiement, mail réel, WhatsApp, ticket ou prospect réel créé pendant l'audit.
+
+ÉTAT ET PÉRIMÈTRE DE PREUVE
+SSH ina-relay, dépôt /home/inaops/5sursync. Aucune instruction AGENTS.md trouvée sous
+/home/inaops à profondeur 3. Plusieurs sessions Claude actives : aucune construction lancée,
+aucun fichier de son arbre modifié. Sources copiées localement, empreintes contrôlées stables.
+Dernier commit : 9d9065dfb06ab488800b5545777e64a9f3a37bb3 (anglais) ; nouveautés non commitées.
+Production : 5sursync:mail-simafri-20261009b,
+sha256:c3e223589f4ce4458a993ef029d30b4900514109954649edaa985cf0521acf6e.
+Candidate testée : 5sursync:suivi-preprod-20261010,
+sha256:091a03e4481cd2bc91537d42934779de3c8c647051f4a58515d0ce795e7f05a2.
+Les quatre fichiers clés accueil/suivi/actions/hooks ont la même empreinte dans cette
+candidate et dans l'arbre courant. La candidate inclut aussi le redesign devis/factures.
+Production : /crm/suivi 404, fichier source absent ; colonne clients.pipeline absente et
+20261010_020200_crm_suivi absente des 12 migrations enregistrées. Pas une simple erreur de menu.
+HTTPS public forcé vers VPS : /crm et /api/cms/clients 401 (Basic Auth).
+Dans conteneur production, anonyme : /crm et export 307 vers login, API clients/admins 403,
+/services /contact /api/health 200. Parcours authentifiés réels de production non exercés.
+
+RECETTE INDÉPENDANTE
+Unitaires CRM sur candidate sans réseau : 13/13 réussis.
+Recette navigateur candidate : 172/172 réussis, 0 erreur navigateur.
+Banc distinct /tmp/audit-six-points-20261010 ; réseau Docker interne, base syncit_test,
+comptes et contenu synthétiques uniquement, messagerie désactivée, aucun port publié.
+Les deux conteneurs et réseau du banc ont été supprimés ; services réels healthy ensuite.
+Les deux lignes ERROR du journal sont les refus anonymes CMS attendus, vérifiés par les tests.
+Sources/preuves locales : audit-six-points/source et audit-six-points/preuves.
+Résultats : preuves/out-crm/crm-results.json et preuves/result.log.
+Captures : crm-home.png, crm-follow-board.png, crm-client.png, crm-mobile-crm-suivi.png.
+Ce sont des captures de fixtures, pas des données ni écrans authentifiés de production.
+
+1 — ACCUEIL À FAIRE AUJOURD'HUI : PARTIEL, VÉRIFIÉ SUR CANDIDATE, NON LIVRÉ
+Actions dues et anciennes, appels par type d'activité, responsable/date, filtre mes actions,
+entreprises sans prochaine action, demandes du site et tickets ouverts/en cours présents.
+Tests : actions issues de conversion, responsable, planification rapide et mobile réussis.
+Manque : véritable priorité/urgence des tickets et responsable des demandes/tickets dans
+cette vue. Tickets triés par updatedAt, pas par urgence ; aucune priorité dans leur modèle.
+Sources : src/app/(crm)/crm/page.tsx:44–104, 149–237 ; tests/crm-e2e.py:221–235.
+Limites importantes : demandes limitées aux 30 dernières avant filtrage des traitées ;
+label tickets « sans réponse depuis » déduit de updatedAt, pas d'une réponse de l'équipe.
+
+2 — PIPELINE VISUEL : IMPLÉMENTÉ ET VÉRIFIÉ SUR CANDIDATE, ABSENT DE PRODUCTION
+À contacter, Contacté sans réponse, Échange engagé, Besoin identifié, Rendez-vous,
+Devis envoyé, En attente budget, Gagné/Perdu présents. Une carte par entreprise,
+filtres responsable/recherche/sans action, glisser au pointeur et au clavier, dates,
+responsable, perte avec raison obligatoire. Gagné/Perdu affichés comme zones de dépôt
+et listes séparées, plutôt que colonnes persistantes du tableau.
+Tests : glisser/clavier, perte sans raison refusée puis acceptée, gain via opportunité,
+filtres/export/mobile. Sources : src/lib/crm.ts:28–48 ; suivi/page.tsx:19–139 ;
+actions.ts:319–382 ; collections/crm.ts:68–80. Fichier route absent dans production.
+
+3 — FICHE ENTREPRISE : PARTIEL
+Contacts/fonctions, téléphone/email, activités, comptes rendus, notes, mails rattachés,
+opportunités, documents et support existent. Candidate ajoute prochaine action et étape,
+ainsi que notes d'échanges WhatsApp manuels. Tests de contacts, activités, suivi,
+liens entreprises/contacts et mobile passent. Pas d'envoi WhatsApp automatique ajouté.
+Besoin surtout exprimé par étape/opportunité/notes ; pas de fiche structurée dédiée aux
+besoins/services demandés. Ancienne fiche en production ; nouveautés pas disponibles.
+Sources : clients/[id]/page.tsx:28–46, 76–114, 134–187 ; components/crm/parts.tsx:224–280.
+Historique et prochaine action calculés sur les 50 activités les plus récemment créées,
+sans pagination : une action ancienne toujours ouverte peut disparaître de cette vue.
+
+4 — FORMULAIRE PROJET LIÉ AU SERVICE ET RÉALISATIONS : PARTIEL
+Formulaire contact opérationnel, sujet sélectionnable, stockage contact-requests,
+conversion MANUELLE dans le CRM ; recette de création/conversion synthétique réussie.
+CTA /contact sur les pages services. Exemple réalisation Groupe Hage présent sur Réseaux.
+Absents : service consulté transmis/prérempli et formulaire projet dédié contextualisé ;
+ContactForm ne reçoit que locale, topic part vide. CTA vers /contact sans contexte.
+Pas de sélection de réalisations pertinentes sur chacune des quatre pages services.
+Sources : components/ContactForm.tsx:45, 122–134 ; content/services.tsx:42 ;
+content/reseaux-cloud.tsx:187–196, 264 ; content/solutions-metier.tsx:37, 222 ;
+app/(site)/api/contact/route.ts:13–32 ; app/(crm)/crm/actions.ts:392–482.
+Le formulaire enregistre une demande, pas automatiquement un prospect : fonctionnement
+actuel honnête et conversion explicitement humaine. Production routes publiques 200.
+
+5 — INDICATEURS COMMERCIAUX DEMANDÉS : PARTIEL, MÉTRIQUES SPÉCIFIQUES ABSENTES
+Présents : comptes clients/prospects, montant pipeline ouvert/pondéré, gagné ce mois,
+factures à encaisser, tâches dues, effectifs par étape. Pondération montant × probabilité.
+Non trouvés : entreprises contactées par période, taux de réponse, rendez-vous réalisés,
+devis envoyés par période, services demandés et agrégation des raisons de perte.
+Une distribution d'étapes n'est pas un décompte d'événements ni un taux de réponse.
+Pas de définitions/périodes pour ces métriques manquantes, pas de chiffres inventés.
+Sources : crm/page.tsx:111–140 ; lib/crm.ts:92 ; collections/crm.ts:118–124.
+Les raisons sont stockées, mais aucun rapport agrégé retrouvé. Widgets anciens présents
+dans production, nouveau tableau candidat non déployé.
+
+6 — ÉTAT SYSTÈME : PARTIEL
+Messagerie /crm/messagerie?vue=etat : dernier passage/succès/erreur par dossier,
+transport configuré, restrictions, non-remises/adresses bloquées ; accès protégé par rôle mail.
+Demandes non traitées existent ailleurs (/crm/demandes et accueil candidat).
+Absent : tableau unifié avec sauvegarde et dernière restauration testée, supervision
+des demandes non traitées et rejets au même endroit. Aucun code d'état sauvegarde trouvé.
+Source : crm/messagerie/page.tsx:58–119 ; mail/crm.ts et mail/access.ts.
+Sauvegarde Oct10 09:52 présente (métadonnées seulement contrôlées) ; documentation ETAT
+dit restauration de contrôle de cette sauvegarde bloquée. Existence/listage d'un dump
+n'est pas une restauration testée. Pas de restauration réalisée pendant cet audit.
+
+ACCÈS, HUMAINS ET ERP
+Guarde CRM admins uniquement, clients/anonymes refusés ; Local API overrideAccess:false.
+Tests 172 couvrent export anonyme, CMS anonyme, accès client CRM/export/API refusés,
+contacts d'autres entreprises refusés, protections documents et suppression.
+Aucune fuite d'accès reproduite dans ce périmètre ; ce n'est pas un audit exhaustif.
+Actions commerciales manuelles, WhatsApp ouvert par bouton humain, envoi mail soumis à
+droits propres ; aucun envoi réel pendant l'audit. Les rappels internes existants sont
+distincts d'une campagne prospect. Aucun changement au transport ou allowlist réalisé.
+Aucun connecteur Dolibarr trouvé : la conservation de Dolibarr comme ERP repose sur
+l'organisation d'usage, pas une intégration/contrainte technique vérifiée. Devis/factures
+CRM préexistants, redesign candidat inclus ; décider explicitement qui fait référence.
+
+CORRECTIONS PRIORISÉES (PROPOSÉES SEULEMENT)
+P1 — Écart livraison : suivi/migration absents en production. Ne pas annoncer la livraison
+des six points ; terminer couverture et recette, puis déploiement séparément autorisé.
+P1 — Accueil peut masquer une demande ancienne non traitée et afficher « Aucune demande
+non traitée » : corriger le comptage/filtrage global avant pagination (page.tsx:53–61,121).
+Déduit du code, cas frontière non reproduit dynamiquement par la recette existante.
+P2 — Prochaine action fausse sur fiche au-delà de 50 activités : requête dédiée aux actions
+ouvertes datées et pagination historique (clients/[id]/page.tsx:31,42–46). Déduit du code.
+P2 — « Prochaine action obligatoire » appliquée au formulaire suivi mais pas à tous les
+chemins : moveProspect, saveClient et API client permettent une étape active sans action ;
+le hook n'impose pas l'invariant. Clarifier obligation globale vs simple alerte avant
+durcissement (actions.ts:60–70,319–382 ; collections/crm.ts:68–80). Déduit du code.
+P2 — Statut « sans réponse » Support trompeur : utiliser dernière réponse équipe/client
+et une priorité explicite, plutôt que updatedAt + 24 h (page.tsx:117,206).
+P2 — Fausse promesse formulaire projet : contextualiser service, conserver contexte à
+l'enregistrement et ajouter preuve/réalisation pertinente par service.
+P2 — Définir/implémenter les indicateurs manquants et l'état sauvegarde/restauration.
+P2 — Bug Support connu toujours dans source : formulaire nouveau ticket montré à un
+administrateur, mais POST refuse 403 ; supportPageUser accepte admin, API exige compte
+client. Prévenir/diriger vers admin au lieu d'offrir un formulaire voué à l'échec
+(lib/backend.ts:23–28 ; support/nouveau/page.tsx:6 ; api/support/tickets/route.ts:49–51).
+Non rejoué en production ; confirmé par inspection, documentation et règles existantes.
+P3 — Tests manquants : >30 demandes, >50 activités, réel tri urgent, absence de prochaine
+action par API/tableau, contexte service et indicateurs. 172/172 ne couvre pas ces limites.
+
+FIN : aucun correctif autorisé ou appliqué. Pas d'accès aux messages privés, dumps,
+clés ni secrets ; pas de client réel dans le banc. Production/preproduction inchangées.

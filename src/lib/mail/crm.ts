@@ -13,8 +13,8 @@ export const mailContext = cache(async () => {
   return { ctx, actor, deps: status.enabled ? mailDeps(database()) : null, reason: status.enabled ? null : status.reason };
 });
 export const mailUnavailable: Record<string, string> = {
-  disabled: "Messagerie contact@ non activée sur cette instance (activation après configuration Microsoft, en production seulement).",
-  origin: "La messagerie contact@ n’est active qu’en production.",
-  configuration: "Messagerie contact@ : configuration Microsoft incomplète (voir documentation/microsoft365.md).",
+  disabled: "Messagerie du CRM non activée sur cette instance (activation en production seulement, après configuration).",
+  origin: "La messagerie du CRM n’est active qu’en production.",
+  configuration: "Messagerie du CRM : configuration incomplète (voir documentation/messagerie-simafri.md).",
   build: "Messagerie indisponible.",
 };

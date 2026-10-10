@@ -180,6 +180,23 @@ export async function projects(home = false): Promise<Project[]> {
     return fallbackProjects;
   }
 }
+// Which existing case studies each service page shows, by anchor. Editorial choice kept
+// in one place so it can be reviewed; anchors are resolved against the real published
+// case studies below, so an edited or unpublished one simply drops out instead of
+// leaving a dead /realisations#… link.
+export const serviceCaseAnchors: Record<string, readonly string[]> = {
+  "reseaux-cloud": ["groupe-hage", "afribone-guinee", "interconnexions-sites"],
+  "solutions-metier": ["ina-archives-institutionnel", "mairie-dakar-contexte"],
+  "developpement-api": ["harmattan", "mismo-equip", "ina-archives-institutionnel"],
+  "maintenance-support": ["interconnexions-sites", "lpg-expo", "afribone-guinee"],
+};
+/** Published case studies relevant to a service page, in the chosen order. */
+export async function casesForService(service: string): Promise<CaseStudy[]> {
+  const wanted = serviceCaseAnchors[service];
+  if (!wanted?.length) return [];
+  const all = await caseStudies();
+  return wanted.map((a) => all.find((c) => c.anchor === a)).filter((c): c is CaseStudy => !!c);
+}
 export async function caseStudies(): Promise<CaseStudy[]> {
   if (process.env.BUILD_MODE === "1") return fallbackCaseStudies;
   try {

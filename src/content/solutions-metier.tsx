@@ -4,12 +4,16 @@ import type React from "react";
 import { type Locale, localePath } from "@/lib/locale";
 import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
+import { ServiceCases } from "@/components/ServiceCases";
+import type { CaseStudy } from "@/lib/showcase";
 export default function PageSolutionsMetier({
   locale = "fr",
   texts = {},
+  cases = [],
 }: {
   locale?: Locale;
   texts?: Record<string, string>;
+  cases?: CaseStudy[];
 }) {
   const tr = (text: string) => translate(locale, text);
   const lp = (path: string) => localePath(locale, path);
@@ -34,7 +38,7 @@ export default function PageSolutionsMetier({
             <br />
             {t("text-9", " préparer le déploiement et accompagner les usages.")}
           </p>
-          <a className="button aqua" href={lp("/contact")}>
+          <a className="button aqua" href={lp("/contact?service=solutions-metier")}>
             {t("text-10", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -219,12 +223,13 @@ export default function PageSolutionsMetier({
               )}
             </p>
           </div>
-          <a className="button navy" href={lp("/contact")}>
+          <a className="button navy" href={lp("/contact?service=solutions-metier")}>
             {t("text-43", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
         </div>
       </section>
+      <ServiceCases cases={cases} locale={locale} />
     </main>
   );
 }

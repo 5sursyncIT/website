@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 type Addr = { emailAddress: { address: string; name?: string } };
 type Msg = {
   id: string; folder: "inbox" | "sentitems" | "drafts"; internetMessageId: string; conversationId: string; changeKey: number;
-  subject: string; from?: Addr; toRecipients: Addr[]; ccRecipients: Addr[]; bccRecipients: Addr[];
+  subject: string; from?: Addr; sender?: Addr; toRecipients: Addr[]; ccRecipients: Addr[]; bccRecipients: Addr[];
   receivedDateTime: string; sentDateTime?: string; isDraft: boolean; body: string; messageClass: string;
   attachments: { id: string; name: string; contentType: string; contentBytes: string; isInline: boolean; contentId?: string }[];
 };
@@ -38,7 +38,7 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
   const view = (m: Msg, select: string | null, bodyType: string) => {
     const full: Record<string, unknown> = {
       id: m.id, internetMessageId: m.internetMessageId, conversationId: m.conversationId, changeKey: `ck-${m.changeKey}`, subject: m.subject,
-      from: m.from, toRecipients: m.toRecipients, ccRecipients: m.ccRecipients, bccRecipients: m.bccRecipients,
+      from: m.from, sender: m.sender, toRecipients: m.toRecipients, ccRecipients: m.ccRecipients, bccRecipients: m.bccRecipients,
       receivedDateTime: m.receivedDateTime, sentDateTime: m.sentDateTime, hasAttachments: m.attachments.some((a) => !a.isInline),
       isDraft: m.isDraft, parentFolderId: `folder-${m.folder}`, body: { contentType: bodyType, content: bodyType === "text" ? text(m.body) : m.body },
     };
@@ -106,6 +106,7 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
       if (url.pathname === "/_control/send-mode") { state.sendMode = body.mode; return send(res, 200, {}); }
       if (url.pathname === "/_control/expire-delta") { generation++; return send(res, 200, {}); }
       if (url.pathname === "/_control/state") return send(res, 200, { sends: state.sends, tokens: state.tokens, drafts: [...messages.values()].filter((m) => m.folder === "drafts").map((m) => ({ id: m.id, subject: m.subject, body: m.body, attachments: m.attachments.map((a) => a.contentId ?? a.name) })), calls: state.calls });
+      if (url.pathname === "/_control/set-from") { const m = messages.get(body.id); if (m) { m.from = body.from ? addr(body.from) : undefined; m.sender = body.sender ? addr(body.sender) : undefined; } return send(res, 200, {}); }
       if (url.pathname === "/_control/edit-in-outlook") { const m = messages.get(body.id); if (m) { m.body += "<p>ajout Outlook</p>"; m.changeKey++; } return send(res, 200, {}); }
       return err(res, 404, "NotFound");
     }
@@ -142,7 +143,7 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
       return send(res, 200, { value: [...messages.values()].filter((x) => x.folder === "sentitems" && f && x.internetMessageId === f[1].replace(/''/g, "'")).map((x) => ({ id: x.id })) });
     }
     if (rest === "/messages" && req.method === "POST") {
-      const d = add({ folder: "drafts", subject: body.subject ?? "", body: body.body?.content ?? "", toRecipients: body.toRecipients ?? [], ccRecipients: body.ccRecipients ?? [] });
+      const d = add({ folder: "drafts", subject: body.subject ?? "", body: body.body?.content ?? "", toRecipients: body.toRecipients ?? [], ccRecipients: body.ccRecipients ?? [], from: body.from, sender: body.sender });
       return send(res, 201, view(d, null, "html"));
     }
     if (!(m = rest.match(/^\/messages\/([^/]+)(\/.*)?$/))) return err(res, 404, "NotFound");
@@ -159,6 +160,8 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
       if (body.subject !== undefined) msg.subject = body.subject;
       if (body.toRecipients) msg.toRecipients = body.toRecipients;
       if (body.ccRecipients) msg.ccRecipients = body.ccRecipients;
+      if (body.from) msg.from = body.from;
+      if (body.sender) msg.sender = body.sender;
       if (body.body) msg.body = body.body.content;
       msg.changeKey++;
       return send(res, 200, view(msg, null, "html"));
@@ -186,6 +189,8 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
       if (state.sendMode === "fail400") return err(res, 400, "ErrorInvalidRecipients");
       // The message really leaves (to the fake), whatever the answer below.
       state.sends.push({ id: msg.id, to: msg.toRecipients.map((r) => r.emailAddress.address) });
+      // Exchange: a message without from leaves as the mailbox that holds it.
+      msg.from ??= addr(opts.mailboxAddress); msg.sender ??= msg.from;
       msg.isDraft = false; msg.folder = "sentitems"; msg.sentDateTime = msg.receivedDateTime = new Date().toISOString(); msg.changeKey++;
       touch(msg);
       if (state.sendMode === "after503") return err(res, 503, "ServiceUnavailable");
@@ -194,7 +199,7 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
     }
     return err(res, 404, "NotFound");
   });
-  return new Promise<{ url: string; close: () => void; add: typeof add; state: typeof state; expireDelta: () => void; remove: (id: string) => void; editInOutlook: (id: string) => void; messages: Map<string, Msg> }>((resolve) =>
+  return new Promise<{ url: string; close: () => void; add: typeof add; state: typeof state; expireDelta: () => void; remove: (id: string) => void; editInOutlook: (id: string) => void; setFrom: (id: string, from?: string, sender?: string) => void; messages: Map<string, Msg> }>((resolve) =>
     server.listen(port, () => {
       const p = (server.address() as { port: number }).port;
       resolve({
@@ -202,6 +207,8 @@ export function startFakeGraph(opts: FakeOptions, port = 0) {
         expireDelta: () => { generation++; },
         remove: (id) => { const x = messages.get(id); if (x) { messages.delete(id); touch(x, true); } },
         editInOutlook: (id) => { const x = messages.get(id); if (x) { x.body += "<p>ajout Outlook</p>"; x.changeKey++; } },
+        // Sender changed without a new changeKey, to test the sender check on its own.
+        setFrom: (id, from, sender) => { const x = messages.get(id); if (x) { x.from = from ? addr(from) : undefined; x.sender = sender ? addr(sender) : undefined; } },
       });
     }));
 }

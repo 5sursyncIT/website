@@ -6,7 +6,7 @@ import { mailStatus, parseAllowlist } from "../src/lib/mail/config";
 import { clientAssertion } from "../src/lib/mail/graph";
 import {
   companyDomain, composeBody, composeFromText, counterpartAddresses, decideLink, hasSignature, isLikelyNdr, isNdrClass,
-  ndrFailedRecipients, parseRecipients, quoteHtml, sendRefusal, signatureHtml, stripActiveHtml, SIGNATURE_MARK,
+  ndrFailedRecipients, parseRecipients, quoteHtml, sendRefusal, senderRefusal, signatureHtml, stripActiveHtml, SIGNATURE_MARK,
 } from "../src/lib/mail/rules";
 import { initialDeltaPath } from "../src/lib/mail/sync";
 import { certThreshold } from "../src/lib/mail/worker";
@@ -30,6 +30,15 @@ test("recipients: parsing, allowlist during acceptance, suppressed addresses, ow
   assert.match(sendRefusal(["contact@5sursync.com"], "*", none, "contact@5sursync.com")!, /elle-même/);
   assert.match(sendRefusal([], "*", none, "contact@5sursync.com")!, /Aucun destinataire/);
   assert.equal(parseAllowlist(""), undefined);
+});
+
+test("sender: only contact@ may leave, in from and sender", () => {
+  const box = "contact@5sursync.com";
+  assert.equal(senderRefusal("Contact@5sursync.com", "contact@5sursync.com", box), null);
+  assert.equal(senderRefusal("contact@5sursync.com", null, box), null);
+  assert.match(senderRefusal(null, null, box)!, /n’a pas d’expéditeur contact@5sursync\.com/);
+  assert.match(senderRefusal("ydiop@5sursync.com", "ydiop@5sursync.com", box)!, /expéditeur de ce brouillon est ydiop@5sursync\.com, et non contact@/);
+  assert.match(senderRefusal("contact@5sursync.com", "ydiop@5sursync.com", box)!, /expéditeur réel \(sender\).*ydiop@/);
   assert.equal(parseAllowlist(" * "), "*");
   assert.deepEqual(parseAllowlist("Test@X.sn, autre@y.sn"), ["test@x.sn", "autre@y.sn"]);
 });
@@ -135,4 +144,131 @@ test("synchronisation start and certificate thresholds", () => {
   assert.equal(certThreshold(inDays(6), now), 7);
   assert.equal(certThreshold(inDays(1), now), 1);
   assert.equal(certThreshold(new Date(now - 86_400_000), now), 0);
+});
+
+// ---------- Simafri (SMTP / IMAP) ----------
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import type { Pool } from "pg";
+import { SIMAFRI } from "../src/lib/mail/config";
+import { smtpPhaseCode, smtpSendOutcome } from "../src/lib/mail/imap";
+import { attachmentRefusal, buildMime, parseMail, withDate } from "../src/lib/mail/mime";
+import { composeText, ndrKind, parseDsn, ndrKindFromText, statesFor } from "../src/lib/mail/rules";
+import { mailDeps } from "../src/lib/mail/service";
+
+test("Simafri activation: one provider only, real servers only from production, strict TLS", () => {
+  const saved = { ...process.env };
+  const dir = mkdtempSync(path.join(tmpdir(), "mail-"));
+  const secretFile = path.join(dir, "pw");
+  writeFileSync(secretFile, "fixture-secret\n", { mode: 0o600 });
+  try {
+    for (const k of Object.keys(process.env)) if (k.startsWith("MAIL_")) delete process.env[k];
+    Object.assign(process.env, { MAIL_ENABLED: "true", MAIL_PROVIDER: "imap", APP_ORIGIN: "https://5sursync.com", MAIL_PASSWORD_FILE: secretFile });
+    const prod = mailStatus();
+    assert.ok(prod.enabled && prod.provider === "imap");
+    if (prod.enabled && prod.provider === "imap") {
+      assert.deepEqual([prod.config.smtp, prod.config.imap, prod.config.mailboxAddress, prod.config.user, prod.config.ca],
+        [{ host: "mail.crm.5sursync.com", port: 587 }, { host: "da-uk2.hostns.io", port: 993 }, SIMAFRI.address, SIMAFRI.address, undefined]);
+      assert.equal(prod.config.displayName, "L’équipe 5/Sync IT");
+      assert.equal(prod.config.ehloName, "vmi3557177.contaboserver.net");
+      assert.equal(prod.config.password(), "fixture-secret");
+      assert.ok(!JSON.stringify(prod.config).includes("fixture-secret"), "password never serialised");
+      assert.equal(prod.config.sendAllowlist, undefined, "sending closed until an acceptance list is set");
+    }
+    // Only the configured provider exists: no Graph client, so no Graph send possible.
+    const deps = mailDeps({} as Pool);
+    assert.ok(deps && "kind" in deps && deps.kind === "imap" && !("graph" in deps));
+    // Preproduction can never reach the real mailbox.
+    process.env.APP_ORIGIN = "https://preprod.5sursync.com";
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "origin" });
+    // A test server never from production; a test authority never in production.
+    process.env.APP_ORIGIN = "https://5sursync.com";
+    Object.assign(process.env, { MAIL_SMTP_HOST: "smtp.test", MAIL_IMAP_HOST: "imap.test" });
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "origin" });
+    delete process.env.MAIL_SMTP_HOST; delete process.env.MAIL_IMAP_HOST;
+    process.env.MAIL_TLS_CA_FILE = secretFile;
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "configuration" });
+    delete process.env.MAIL_TLS_CA_FILE;
+    // In production, the IMAP host is da-uk2.hostns.io (mail.crm.5sursync.com fails TLS on IMAP).
+    process.env.MAIL_IMAP_HOST = "mail.crm.5sursync.com";
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "configuration" });
+    delete process.env.MAIL_IMAP_HOST;
+    process.env.MAIL_ADDRESS = "autre@crm.5sursync.com";
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "configuration" });
+    delete process.env.MAIL_ADDRESS;
+    process.env.MAIL_PASSWORD_FILE = path.join(dir, "absent");
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "configuration" });
+    process.env.MAIL_PROVIDER = "les-deux";
+    assert.deepEqual(mailStatus(), { enabled: false, reason: "configuration" });
+  } finally {
+    process.env = saved;
+  }
+});
+
+test("delivery reports: unknown address vs transport block", () => {
+  assert.equal(ndrKind("5.1.1"), "address");
+  assert.equal(ndrKind("5.1.10"), "address");
+  assert.equal(ndrKind("5.2.1"), "address");
+  assert.equal(ndrKind("5.7.708"), "transport");
+  assert.equal(ndrKind("5.7.1"), "transport");
+  assert.equal(ndrKind("5.4.1"), "transport");
+  assert.equal(ndrKind("5.2.2"), "transport");
+  assert.equal(ndrKind("4.4.7"), "temporary");
+  assert.equal(ndrKind(null, "550 5.7.708 Service unavailable. Access denied, traffic not accepted from this IP."), "transport");
+  assert.equal(ndrKind(""), "unknown");
+  assert.equal(ndrKindFromText("Remote server returned '550 5.1.1 RESOLVER.ADR.RecipNotFound; not found'"), "address");
+  const dsn = parseDsn("Reporting-MTA: dns; mx.example\r\n\r\nFinal-Recipient: rfc822; <A@X.example>\r\nAction: failed\r\nStatus: 5.1.1\r\nDiagnostic-Code: smtp; 550 5.1.1 User\r\n unknown\r\n\r\nFinal-Recipient: rfc822;b@x.example\r\nAction: delayed\r\nStatus: 4.4.1\r\n\r\nFinal-Recipient: rfc822;c@x.example\r\nAction: delivered\r\nStatus: 2.0.0\r\n");
+  assert.deepEqual(dsn.map((r) => [r.address, r.kind]), [["a@x.example", "address"], ["b@x.example", "temporary"]]);
+  assert.equal(dsn[0].diagnostic, "550 5.1.1 User unknown");
+});
+
+test("SMTP outcome: a server reply proves refusal, silence proves nothing", () => {
+  assert.deepEqual(smtpSendOutcome({ code: "EENVELOPE", responseCode: 550, command: "RCPT TO" }), { state: "failed", code: "smtp-550-rcpt" });
+  assert.deepEqual(smtpSendOutcome({ code: "EMESSAGE", responseCode: 451, command: "DATA" }), { state: "failed", code: "smtp-451-data" });
+  assert.deepEqual(smtpSendOutcome({ code: "ETIMEDOUT", command: "CONN" }), { state: "uncertain", code: "smtp-etimedout" });
+  assert.deepEqual(smtpSendOutcome({ code: "ECONNECTION", command: "CONN" }), { state: "uncertain", code: "smtp-econnection" });
+  assert.equal(smtpPhaseCode("connect", { code: "ESOCKET", message: "self-signed certificate in certificate chain" }), "smtp-tls");
+  assert.equal(smtpPhaseCode("connect", { code: "ETLS", message: "Hostname/IP does not match certificate's altnames" }), "smtp-tls");
+  assert.equal(smtpPhaseCode("connect", { code: "ECONNREFUSED", message: "connect ECONNREFUSED" }), "smtp-unreachable");
+  // Seen in production on 09/10: EHLO name refused; not a TLS failure.
+  assert.equal(smtpPhaseCode("connect", { code: "ECONNECTION", message: "EHLO failed but HELO does not support required STARTTLS. response=550 Bad HELO - Host impersonating domain name [crm.5sursync.com]" }), "smtp-connect-550");
+  assert.equal(smtpPhaseCode("auth", { code: "EAUTH", responseCode: 535 }), "smtp-auth-535");
+});
+
+test("MIME: text and HTML, signature and logo once, thread headers, Date set at sending", async () => {
+  const address = "contact@crm.5sursync.com";
+  const raw = await buildMime({
+    from: { name: "L’équipe 5/Sync IT", address }, to: ["a@x.sn"], cc: [], subject: "Objet é", messageId: "<m1@crm.5sursync.com>",
+    text: composeText("Bonjour", address), html: composeBody("Bonjour", "", address), inReplyTo: "<o@x.sn>", references: ["<r@x.sn>", "<o@x.sn>"],
+    attachments: [{ filename: "offre.pdf", contentType: "application/pdf", content: Buffer.from("%PDF") }], logo: Buffer.from([0xff, 0xd8, 0xff]),
+  });
+  const m = await parseMail(raw);
+  assert.equal(m.messageId, "<m1@crm.5sursync.com>");
+  assert.equal(m.inReplyTo, "<o@x.sn>");
+  assert.deepEqual(m.references, ["<r@x.sn>", "<o@x.sn>"]);
+  assert.deepEqual(m.from?.value.map((v) => [v.name, v.address]), [["L’équipe 5/Sync IT", address]]);
+  assert.equal(m.replyTo?.value[0].address, address);
+  assert.equal(String(m.html).split("sync5-signature").length - 1, 2);
+  assert.equal(String(m.html).split("cid:sync5-logo").length - 1, 1);
+  assert.ok(String(m.html).includes("mailto:contact@crm.5sursync.com") && !String(m.html).includes("contact@5sursync.com"));
+  assert.equal(m.attachments.filter((a) => a.cid === "sync5-logo").length, 1);
+  assert.equal((m.text ?? "").split("L’équipe 5/Sync IT").length - 1, 1);
+  assert.equal(composeFromText(m.text ?? ""), "Bonjour");
+  assert.ok(!/^Bcc:/im.test(raw.toString()) && !/X-Mailer/i.test(raw.toString()));
+  const dated = withDate(raw, new Date(Date.UTC(2026, 9, 9, 12, 0, 0)));
+  assert.match(dated.toString(), /^Date: Fri, 09 Oct 2026 12:00:00 \+0000\r$/m);
+  assert.equal(dated.toString().split(/^Date:/m).length - 1, 1);
+});
+
+test("attachments and state labels", () => {
+  assert.equal(attachmentRefusal([{ name: "offre.pdf", size: 1000 }]), null);
+  assert.match(attachmentRefusal([{ name: "x.exe", size: 1 }])!, /refusé/);
+  assert.match(attachmentRefusal([{ name: "page.html", size: 1 }])!, /refusé/);
+  assert.match(attachmentRefusal([{ name: "a.pdf", size: 5 * 1024 * 1024 }])!, /4 Mo/);
+  assert.match(attachmentRefusal(Array.from({ length: 6 }, (_, i) => ({ name: `${i}.pdf`, size: 1 })))!, /5 pièces/);
+  assert.equal(statesFor("imap").accepted.label, "Accepté par le serveur SMTP");
+  assert.equal(statesFor("imap").in_sent.label, "Accepté, copie dans Envoyés");
+  assert.equal(statesFor("graph").accepted.label, "Accepté par Microsoft");
+  assert.ok(signatureHtml().includes("contact@5sursync.com") && signatureHtml("contact@crm.5sursync.com").includes("contact@crm.5sursync.com"));
 });

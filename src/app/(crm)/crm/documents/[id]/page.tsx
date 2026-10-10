@@ -54,7 +54,8 @@ export default async function DocumentPage({ params, searchParams }: { params: P
     doc.number ? documentMails(database(), id) : Promise.resolve([]),
   ]);
   const back = `/crm/documents/${id}`;
-  const next = documentTransitions[doc.kind][doc.status] ?? [];
+  // A CRM-only account prepares drafts: no issuing, status change, payment, credit or email.
+  const next = ctx.full ? documentTransitions[doc.kind][doc.status] ?? [] : [];
   const label = `${documentKindLabel(doc.kind, doc.invoiceType)} ${doc.number ?? "brouillon"}`;
   const finalInvoice = related.docs.find((d) => d.invoiceType !== "deposit" && d.status !== "cancelled");
   const creditFor = doc.creditFor && typeof doc.creditFor === "object" ? doc.creditFor : null;
@@ -107,7 +108,8 @@ export default async function DocumentPage({ params, searchParams }: { params: P
               </form>
             );
           })}
-          {doc.kind === "invoice" && doc.number && doc.status !== "cancelled" && (
+          {!ctx.full && <p className="crm-hint">Émission, statuts, paiements, avoirs et envoi : réservés à un administrateur complet.</p>}
+          {ctx.full && doc.kind === "invoice" && doc.number && doc.status !== "cancelled" && (
             <form action={creditFromInvoice}>
               <input type="hidden" name="id" value={id} />
               <Submit className="crm-btn crm-btn--ghost">Créer un avoir</Submit>
@@ -160,11 +162,11 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                       <td>{p.note || "—"}</td>
                       <td className="num">{money(p.amount)}</td>
                       <td className="num">
-                        <form action={deletePayment}>
+                        {ctx.full && <form action={deletePayment}>
                           <input type="hidden" name="id" value={id} />
                           <input type="hidden" name="payment" value={p.id ?? ""} />
                           <Submit className="crm-btn crm-btn--small crm-btn--ghost" confirm="Supprimer ce paiement ?">Supprimer</Submit>
-                        </form>
+                        </form>}
                       </td>
                     </tr>
                   ))}
@@ -174,7 +176,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
           ) : (
             <p className="crm-empty">Aucun paiement enregistré.</p>
           )}
-          {(doc.balance ?? 0) > 0 && (
+          {ctx.full && (doc.balance ?? 0) > 0 && (
             <>
               <form action={addPayment} className="crm-inline-form crm-payment">
                 <input type="hidden" name="id" value={id} />
@@ -190,7 +192,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
         </section>
       )}
 
-      {doc.number && (
+      {ctx.full && doc.number && (
         <section className="crm-card">
           <h2>Envoyer par email</h2>
           {emailOn ? (

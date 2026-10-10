@@ -25,6 +25,8 @@
     "@payloadcms/translations": "3.90.2",
     "@payloadcms/ui": "3.90.2",
     "graphql": "16.11.0",
+    "imapflow": "2.3.0",
+    "mailparser": "3.9.37",
     "next": "16.3.8",
     "nodemailer": "10.0.16",
     "payload": "3.90.2",
@@ -40,6 +42,7 @@
     "@types/pg": "8.15.6",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "smtp-server": "3.19.18",
     "tsx": "4.23.15",
     "typescript": "5.9.3"
   },

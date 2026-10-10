@@ -2,7 +2,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { z } from 'zod';
 import type { contactSchema } from './validation';
-export type ContactInput = Omit<z.infer<typeof contactSchema>, 'website'>;
+// `service` is optional for callers: the public schema defaults it to "" and
+// recordContact stores NULL when there is none (request sent outside a service page).
+export type ContactInput = Omit<z.infer<typeof contactSchema>, 'website' | 'service'> & { service?: string | null };
 export class SubmissionConflict extends Error {}
 export function contactNotificationsEnabled(env: Record<string,string|undefined> = process.env): boolean {
   return env.APP_ORIGIN === 'https://5sursync.com' && env.SMTP_ENABLED === 'true'
@@ -21,9 +23,9 @@ export async function recordContact(pool: Pool, input: ContactInput, key: string
       await connection.query('COMMIT');
       return { id: Number(previous.rows[0].contact_id), duplicate: true };
     }
-    const created = await connection.query(`INSERT INTO contact_requests(name,company,email,phone,topic,message,notification,created_at,updated_at)
-      VALUES($1,$2,$3,$4,$5,$6,$7,NOW(),NOW()) RETURNING id`,
-      [input.name,input.company,input.email,input.phone,input.topic,input.message,enabled ? 'pending' : 'not-configured']);
+    const created = await connection.query(`INSERT INTO contact_requests(name,company,email,phone,topic,service,message,notification,created_at,updated_at)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,NOW(),NOW()) RETURNING id`,
+      [input.name,input.company,input.email,input.phone,input.topic,input.service || null,input.message,enabled ? 'pending' : 'not-configured']);
     const id = Number(created.rows[0].id);
     await connection.query('INSERT INTO app_contact_submissions(submission_key,body_hash,contact_id,origin) VALUES($1,$2,$3,$4)', [key,hash,id,origin]);
     await connection.query('COMMIT');

@@ -3,12 +3,16 @@ import type React from "react";
 import { type Locale, localePath } from "@/lib/locale";
 import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
+import { ServiceCases } from "@/components/ServiceCases";
+import type { CaseStudy } from "@/lib/showcase";
 export default function PageDeveloppementApi({
   locale = "fr",
   texts = {},
+  cases = [],
 }: {
   locale?: Locale;
   texts?: Record<string, string>;
+  cases?: CaseStudy[];
 }) {
   const tr = (text: string) => translate(locale, text);
   const lp = (path: string) => localePath(locale, path);
@@ -36,7 +40,7 @@ export default function PageDeveloppementApi({
             <br />
             {t("text-8", " des solutions conçues autour de votre activité.")}
           </p>
-          <a className="button aqua" href={lp("/contact")}>
+          <a className="button aqua" href={lp("/contact?service=developpement-api")}>
             {t("text-9", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
@@ -225,12 +229,13 @@ export default function PageDeveloppementApi({
               {t("text-37", "Parlons de vos utilisateurs et de vos besoins.")}
             </p>
           </div>
-          <a className="button aqua" href={lp("/contact")}>
+          <a className="button aqua" href={lp("/contact?service=developpement-api")}>
             {t("text-38", "Parlons de votre besoin ")}
             <span aria-hidden="true">{"↗"}</span>
           </a>
         </div>
       </section>
+      <ServiceCases cases={cases} locale={locale} />
     </main>
   );
 }

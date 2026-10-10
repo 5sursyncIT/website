@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Where } from "payload";
 import { as, crmContext, formatDateTime, pageNumber } from "@/lib/crm-server";
 import { topicLabel } from "@/lib/contact-topics";
 import { relationID } from "@/lib/access";
@@ -12,17 +13,22 @@ export default async function Requests({ searchParams }: { searchParams: Search 
   const ctx = await crmContext();
   const { payload } = ctx;
   const page = pageNumber(search.page);
-  const [requests, clients] = await Promise.all([
-    payload.find({ collection: "contact-requests", sort: "-createdAt", page, limit: 20, depth: 0, ...as(ctx) }),
+  const pending = param(search, "filtre") !== "toutes";
+  // Every request already converted, whatever its age: the conversion activity carries it.
+  // Filtering happens in the query below, so "À traiter" is a global filter with a real
+  // total and real pages — never "nothing to treat" while an older request is waiting.
+  const [converted, clients] = await Promise.all([
+    payload.find({ collection: "crm-activities", where: { request: { exists: true } }, pagination: false, depth: 1, select: { request: true, client: true }, populate: { clients: { name: true } }, ...as(ctx) }),
     payload.find({ collection: "clients", sort: "name", pagination: false, depth: 0, select: { name: true }, ...as(ctx) }),
   ]);
-  const ids = requests.docs.map((r) => r.id);
-  const converted = ids.length
-    ? await payload.find({ collection: "crm-activities", where: { request: { in: ids } }, pagination: false, depth: 1, select: { request: true, client: true }, populate: { clients: { name: true } }, ...as(ctx) })
-    : { docs: [] };
   const linked = new Map(converted.docs.map((a) => [String(relationID(a.request)), a.client]));
-  const pending = param(search, "filtre") !== "toutes";
-  const shown = pending ? requests.docs.filter((r) => !linked.has(String(r.id))) : requests.docs;
+  const treated = [...new Set(converted.docs.map((a) => relationID(a.request)).filter((v) => v !== null))];
+  const untreated: Where = treated.length ? { id: { not_in: treated } } : {};
+  const [requests, waiting] = await Promise.all([
+    payload.find({ collection: "contact-requests", where: pending ? untreated : {}, sort: "-createdAt", page, limit: 20, depth: 0, ...as(ctx) }),
+    payload.count({ collection: "contact-requests", where: untreated, ...as(ctx) }),
+  ]);
+  const shown = requests.docs;
   // Suggest an existing company with the same name (case-insensitive).
   const match = (company?: string | null) =>
     company ? clients.docs.find((c) => c.name.trim().toLowerCase() === company.trim().toLowerCase())?.id : undefined;
@@ -35,10 +41,10 @@ export default async function Requests({ searchParams }: { searchParams: Search 
         La demande d’origine reste inchangée dans l’administration. Aucun email n’est envoyé au visiteur.
       </p>
       <nav className="crm-tabs" aria-label="Filtre">
-        <Link href="/crm/demandes" aria-current={pending ? "page" : undefined}>À traiter (page {page})</Link>
+        <Link href="/crm/demandes" aria-current={pending ? "page" : undefined}>À traiter ({waiting.totalDocs})</Link>
         <Link href="/crm/demandes?filtre=toutes" aria-current={pending ? undefined : "page"}>Toutes</Link>
       </nav>
-      {shown.length === 0 && <p className="crm-empty">Aucune demande à traiter sur cette page.</p>}
+      {shown.length === 0 && <p className="crm-empty">{pending ? "Aucune demande à traiter." : "Aucune demande."}</p>}
       <div className="crm-requests">
         {shown.map((r) => {
           const client = linked.get(String(r.id));

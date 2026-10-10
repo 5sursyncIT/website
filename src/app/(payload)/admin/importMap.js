@@ -4,6 +4,8 @@ import { ClientWorkspace as ClientWorkspace_e8abe4e007a9fc703380432d12adf875 } f
 import { CopyRowLabel as CopyRowLabel_0edec3d8a862dee53fa2af98a93367df } from '@/components/admin/CopyRowLabel'
 import { Icon as Icon_066c562e10ad4e70ff0de1a39f9b91f6 } from '@/components/admin/Brand'
 import { Logo as Logo_066c562e10ad4e70ff0de1a39f9b91f6 } from '@/components/admin/Brand'
+import { NavBrand as NavBrand_066c562e10ad4e70ff0de1a39f9b91f6 } from '@/components/admin/Brand'
+import { CrmNavLink as CrmNavLink_crm0nav0link } from '@/components/admin/CrmNavLink'
 import { Overview as Overview_5db7e5e3e4964e6efc90884fde697bc7 } from '@/components/admin/Overview'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -15,6 +17,8 @@ export const importMap = {
   "@/components/admin/CopyRowLabel#CopyRowLabel": CopyRowLabel_0edec3d8a862dee53fa2af98a93367df,
   "@/components/admin/Brand#Icon": Icon_066c562e10ad4e70ff0de1a39f9b91f6,
   "@/components/admin/Brand#Logo": Logo_066c562e10ad4e70ff0de1a39f9b91f6,
+  "@/components/admin/Brand#NavBrand": NavBrand_066c562e10ad4e70ff0de1a39f9b91f6,
+  "@/components/admin/CrmNavLink#CrmNavLink": CrmNavLink_crm0nav0link,
   "@/components/admin/Overview#Overview": Overview_5db7e5e3e4964e6efc90884fde697bc7,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

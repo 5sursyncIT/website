@@ -1,11 +1,11 @@
 import { identity } from "@/lib/backend";
-import { isAdmin } from "@/lib/access";
+import { isFullAdmin } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { TeamInviteForm } from "@/components/TeamInviteForm";
 export const dynamic = "force-dynamic";
 export default async function Invite() {
   const { payload, user } = await identity();
-  if (!isAdmin(user)) notFound();
+  if (!isFullAdmin(user)) notFound();
   const clients = await payload.find({
     collection: "clients",
     user,

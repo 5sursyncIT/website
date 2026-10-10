@@ -2,7 +2,8 @@ import { withPayload } from "@payloadcms/next/withPayload";
 export default withPayload({
   output: "standalone",
   poweredByHeader: false,
-  experimental: { cpus: 1 },
+  // Server actions carry the CRM mail attachments (4 MB in total, mime.ts); Nginx caps at 6 MB.
+  experimental: { cpus: 1, serverActions: { bodySizeLimit: "5mb" } },
   async headers() {
     return [
       {

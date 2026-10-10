@@ -14,6 +14,8 @@ try {
     const copy=(page.copy??[]).map(row=>({...row}));
     let dirty=false;
     for(const row of copy) {
+      // A country mission may be left empty on purpose: keep it empty, never "".
+      if(typeof row.value!=='string')continue;
       const corrected=row.value.replace(obsoletePhone,'+221 77 097 29 08');
       if(corrected!==row.value){row.value=corrected;changed++;dirty=true;}
     }
@@ -21,7 +23,7 @@ try {
       for(const replacement of entry.replacements) {
         const row=copy.find(row=>row.key===replacement.key);
         if(!row){copy.push({key:replacement.key,value:replacement.after});added++;dirty=true;}
-        else if(row.value!==replacement.after&&(row.value===replacement.before||!row.value.trim())){row.value=replacement.after;changed++;dirty=true;}
+        else if(row.value!==replacement.after&&(row.value===replacement.before||!row.value?.trim())){row.value=replacement.after;changed++;dirty=true;}
         else if(row.value!==replacement.after)preserved++;
       }
       for(const addition of entry.additions) {

@@ -5,12 +5,15 @@ import { tr as translate } from "@/lib/i18n";
 import { ContactForm } from "@/components/ContactForm";
 import { contactFromCopy } from "@/lib/contact-details";
 import { ContactMap } from "@/components/ContactMap";
+import { serviceLabel, serviceTopic } from "@/lib/contact-topics";
 export default function PageContact({
   locale = "fr",
   texts = {},
+  service = "",
 }: {
   locale?: Locale;
   texts?: Record<string, string>;
+  service?: string;
 }) {
   const details = contactFromCopy(texts);
   const tr = (text: string) => translate(locale, text);
@@ -128,7 +131,13 @@ export default function PageContact({
             </aside>
             <div>
               <h2>{t("text-15", "Votre message")}</h2>
-              <ContactForm locale={locale} />
+              {service && (
+                <p className="form-help">
+                  {tr("Votre demande concerne")} <strong>{serviceLabel(service)}</strong>.{" "}
+                  {tr("Vous pouvez changer le sujet ci-dessous.")}
+                </p>
+              )}
+              <ContactForm locale={locale} topic={serviceTopic(service)} service={service} />
             </div>
           </div>
         </div>

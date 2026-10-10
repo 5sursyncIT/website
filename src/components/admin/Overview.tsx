@@ -1,17 +1,27 @@
 import type { ServerProps } from "payload";
+import { redirect } from "next/navigation";
 import { topicLabel } from "@/lib/contact-topics";
+import { isFullAdmin, staffRole } from "@/lib/access";
 // Dashboard summary: what needs attention first. Only rendered for logged-in admins.
 const statusLabels: Record<string, string> = {
   open: "Ouvert",
   "in-progress": "En cours",
   "waiting-client": "En attente client",
 };
+const today = new Intl.DateTimeFormat("fr-FR", {
+  dateStyle: "full",
+  timeZone: "Africa/Dakar",
+});
 const when = new Intl.DateTimeFormat("fr-FR", {
   dateStyle: "medium",
   timeStyle: "short",
   timeZone: "Africa/Dakar",
 });
-export async function Overview({ payload }: ServerProps) {
+export async function Overview({ payload, user }: ServerProps) {
+  // A CRM-only account has nothing to do here: its workspace is /crm.
+  if (staffRole(user) === "crm") redirect("/crm");
+  // Technicians see the tickets only (site requests are commercial data).
+  const full = isFullAdmin(user);
   const admin = payload.config.routes.admin;
   const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
   const active = { status: { in: Object.keys(statusLabels) } };
@@ -41,7 +51,7 @@ export async function Overview({ payload }: ServerProps) {
       select: { subject: true, status: true, client: true, updatedAt: true },
     }),
   ]);
-  const stats = [
+  const allStats = [
     {
       label: "Demandes de contact (7 jours)",
       value: week.totalDocs,
@@ -59,18 +69,24 @@ export async function Overview({ payload }: ServerProps) {
       warn: failed.totalDocs > 0,
     },
   ];
+  const stats = full ? allStats : allStats.filter((s) => s.href.includes("/tickets"));
   return (
     <section className="sync-overview">
       <div className="sync-overview__head">
-        <h2>Bonjour, voici l’essentiel</h2>
-        <span>
-          <a className="sync-overview__site" href="/crm">
-            Ouvrir le CRM →
-          </a>{" "}
-          <a className="sync-overview__site" href="/" target="_blank" rel="noopener">
+        <div>
+          <p className="sync-overview__eyebrow">{today.format(new Date())}</p>
+          <h1>Bonjour, voici l’essentiel</h1>
+        </div>
+        <div className="sync-overview__actions">
+          {full && (
+            <a className="sync-btn" href="/crm">
+              Ouvrir le CRM
+            </a>
+          )}
+          <a className="sync-btn sync-btn--ghost" href="/" target="_blank" rel="noopener">
             Voir le site ↗
           </a>
-        </span>
+        </div>
       </div>
       <div className="sync-overview__stats">
         {stats.map((s) => (
@@ -85,8 +101,8 @@ export async function Overview({ payload }: ServerProps) {
         ))}
       </div>
       <div className="sync-overview__lists">
-        <div className="sync-panel">
-          <h3>Dernières demandes de contact</h3>
+        {full && <div className="sync-panel">
+          <h2>Dernières demandes de contact</h2>
           {contacts.docs.length ? (
             <ul>
               {contacts.docs.map((c) => (
@@ -106,9 +122,15 @@ export async function Overview({ payload }: ServerProps) {
           ) : (
             <p className="sync-panel__empty">Aucune demande pour l’instant.</p>
           )}
-        </div>
+          <a className="sync-panel__more" href={`${admin}/collections/contact-requests`}>
+            Toutes les demandes →
+          </a>
+        </div>}
         <div className="sync-panel">
-          <h3>Tickets en cours</h3>
+          <h2>
+            Tickets en cours
+            <span className="sync-count">{openTickets.totalDocs}</span>
+          </h2>
           {tickets.docs.length ? (
             <ul>
               {tickets.docs.map((t) => (
@@ -127,6 +149,9 @@ export async function Overview({ payload }: ServerProps) {
           ) : (
             <p className="sync-panel__empty">Aucun ticket à traiter.</p>
           )}
+          <a className="sync-panel__more" href={`${admin}/collections/tickets`}>
+            Tous les tickets →
+          </a>
         </div>
       </div>
     </section>

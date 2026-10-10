@@ -64,12 +64,17 @@ with sync_playwright() as p:
     page.wait_for_url("**/admin", timeout=30000)
     page.wait_for_load_state("networkidle")
     check("admin dashboard links to CRM", page.locator("a[href='/crm']").count() >= 1)
-    page.goto(BASE + "/admin/collections/crm-deals")
-    page.wait_for_load_state("networkidle")
-    check("CRM group in admin navigation", "CRM" in page.locator("nav").first.inner_text() and "Opportunités" in page.content())
+    nav = page.locator("nav").first
+    check("admin navigation links to /crm", nav.locator("a.sync-nav-crm[href='/crm']").count() == 1)
+    check("CRM collections not duplicated in admin navigation",
+          all(label not in nav.inner_text() for label in ("Opportunités", "Devis et factures", "Activités et tâches")))
+    check("admin CRM collection view not exposed", page.goto(BASE + "/admin/collections/crm-deals").status == 404)
+    page.goto(BASE + "/admin")
+    api = page.evaluate("fetch('/api/cms/crm-deals?limit=1', {credentials: 'include'}).then(r => r.status)")
+    check("CRM collections still served by the API", api == 200, str(api))
 
     page.goto(BASE + "/crm")
-    check("dashboard rendered", page.locator("h1").inner_text() == "Tableau de bord")
+    check("home page is today's to-do", page.locator("h1").inner_text() == "Aujourd’hui")
     check("dashboard lists unconverted request", "Société Fixture" in page.locator(".crm-card", has_text="Demandes du site").inner_text())
     page.screenshot(path=f"{OUT}/crm-dashboard-empty.png", full_page=True)
 
@@ -194,6 +199,10 @@ with sync_playwright() as p:
     late = page.locator(".crm-card", has_text="En retard")
     check("task in late group", "Relancer le devis fixture" in late.inner_text())
     submit(page, late.locator(".crm-timeline__item", has_text="Relancer le devis fixture").locator("button", has_text="Marquer comme faite"))
+    # Last planned action of a company in progress: its page asks for the next one.
+    check("last action done: company page asks for the next action",
+          f"/crm/clients/{client_b}" in page.url and "planifiez la prochaine action" in flash(page), f"{page.url} {flash(page)}")
+    page.goto(BASE + "/crm/taches")
     check("task completed", "Relancer le devis fixture" in page.locator(".crm-card", has_text="Récemment terminées").inner_text())
     page.screenshot(path=f"{OUT}/crm-tasks.png", full_page=True)
     check("reminders shown as not enabled on this server", "Rappels email non activés" in page.locator("main").inner_text())
@@ -207,6 +216,75 @@ with sync_playwright() as p:
     submit(page, page.locator("button", has_text="Enregistrer les modifications"))
     check("activity edited", "Activité modifiée" in flash(page) and page.locator("input[name=subject]").input_value().endswith("(modifiée)"), flash(page))
     check("reminder option saved", not page.locator("input[name=remind]").is_checked())
+
+    # Commercial follow-up (2026-10-10): home page, stages board, mandatory next action.
+    home = lambda key: page.locator(f"section[aria-labelledby=today-{key}]")
+    page.goto(BASE + "/crm")
+    check("home: conversion created an action to answer the request", "Répondre à la demande de Visiteur Test" in home("actions").inner_text())
+    check("home: action shows company, stage and person in charge",
+          all(x in home("actions").inner_text() for x in ("Société Fixture", "Admin Fixture")), home("actions").inner_text()[:200])
+    check("home: Support tickets card", home("tickets").count() == 1)
+    check("home: company without next action listed", "=1+1 Fixture SARL" in home("unplanned").inner_text())
+    page.screenshot(path=f"{OUT}/crm-home.png", full_page=True)
+    row = home("unplanned").locator("li", has_text="=1+1 Fixture SARL")
+    row.locator("input[name=nextDueAt]").fill("2030-01-15T10:00")
+    submit(page, row.locator("button", has_text="Planifier"))
+    check("home: quick planning recorded", "prochaine action planifiée" in flash(page), flash(page))
+    check("home: planned company left the list", "=1+1 Fixture SARL" not in home("unplanned").inner_text())
+    page.goto(BASE + "/crm?pour=moi")
+    check("home: « Mes actions » view", page.locator(".crm-tabs a[aria-current=page]").inner_text() == "Mes actions")
+
+    page.goto(BASE + "/crm/suivi")
+    card = page.locator("#etape-to-contact article.crm-deal", has_text="=1+1 Fixture SARL")
+    check("board: new company « À contacter » with its next action", card.count() == 1 and "15 janv. 2030" in card.inner_text(), card.inner_text() if card.count() else "")
+    check("board: company won through its deal is not on the board", page.locator("article.crm-deal", has_text="Société Fixture").count() == 0)
+    page.screenshot(path=f"{OUT}/crm-follow-board.png", full_page=True)
+    old = page.url
+    card.drag_to(page.locator("#etape-need"))
+    page.wait_for_url(lambda u: u != old, timeout=30000)
+    page.wait_for_load_state("networkidle")
+    check("board: drag to « Besoin identifié »", page.locator("#etape-need article.crm-deal", has_text="=1+1 Fixture SARL").count() == 1, flash(page))
+
+    page.goto(f"{BASE}/crm/clients/{client_b}")
+    box = page.locator("#suivi")
+    check("company: stage and next action shown", "Besoin identifié" in box.inner_text() and "15 janv. 2030" in box.inner_text(), box.inner_text()[:200])
+    def follow_up(close=True, subject="", stage=None, reason=None, due=None, kind=None):
+        details = page.locator("#suivi details")
+        if not details.evaluate("d => d.open"):
+            details.locator("summary").click()
+        f = details.locator("form")
+        if close:
+            f.locator("select[name=close]").select_option(index=1)
+        f.locator("input[name=subject]").fill(subject)
+        if stage:
+            f.locator("select[name=pipeline]").select_option(stage)
+        if reason is not None:
+            f.locator("select[name=lostReason]").select_option(reason)
+        f.locator("input[name=nextDueAt]").fill(due or "")
+        if kind:
+            f.locator("select[name=nextKind]").select_option(kind)
+        submit(page, f.locator("button", has_text="Enregistrer le suivi"))
+    follow_up(subject="Intéressé, budget en janvier", stage="on-hold")
+    check("follow-up refused without a next action", "Planifiez la prochaine action" in flash(page), flash(page))
+    check("refused follow-up changed nothing", "Besoin identifié" in page.locator("#suivi").inner_text())
+    follow_up(subject="Intéressé, budget en janvier", stage="on-hold", due="2030-03-01T09:00", kind="email")
+    msg = flash(page)
+    check("follow-up: action done, stage and next action saved",
+          all(x in msg for x in ("action terminée", "En attente (budget)", "prochaine action planifiée")), msg)
+    check("follow-up: report kept on the done action", "Compte rendu : Intéressé, budget en janvier" in page.locator("main").inner_text())
+    check("follow-up: new next action shown", "1 mars 2030" in page.locator("#suivi").inner_text(), page.locator("#suivi").inner_text()[:200])
+    follow_up(close=False, stage="lost", reason="")
+    check("loss refused without its reason", "raison de la perte" in flash(page), flash(page))
+    follow_up(close=False, stage="lost", reason="competitor")
+    check("loss saved with its reason", "Perdu" in flash(page) and "Concurrent retenu" in page.locator("#suivi").inner_text(), flash(page))
+    page.goto(BASE + "/crm/suivi")
+    check("lost company left the board", page.locator("article.crm-deal", has_text="=1+1 Fixture SARL").count() == 0)
+    page.goto(BASE + "/crm/clients?etape=lost")
+    check("companies list filtered on « Perdu »", "=1+1 Fixture SARL" in page.locator("main").inner_text())
+    exported = page.request.get(BASE + "/crm/export/clients").text()
+    check("export carries stage and loss reason", "Perdu;Concurrent retenu" in exported, exported[:200])
+    page.goto(f"{BASE}/crm/clients/{client_a}")
+    check("won deal won the company follow-up", "Gagné" in page.locator("#suivi").inner_text())
 
     # Accent-free and typo-tolerant search.
     page.goto(BASE + "/crm/clients?q=societe")
@@ -505,6 +583,82 @@ with sync_playwright() as p:
     check("only stubbed wa.me requests", opened == ["https://wa.me/221761112233", "https://wa.me/221771234567"], str(opened))
     wa_page = f"/crm/clients/{wa_multi}"
 
+    # Back-office profiles (2026-10-10): CRM-only assistant and technician (tickets only).
+    api = p.request.new_context(base_url=BASE)
+    def auth(t):
+        return {"Authorization": f"JWT {t}", "Origin": BASE}
+    def login(email, password):
+        return api.post("/api/cms/admins/login", data={"email": email, "password": password}).json().get("token")
+    owner = login(EMAIL, PASSWORD)
+    me = api.get("/api/cms/admins/me", headers=auth(owner)).json().get("user") or {}
+    check("bootstrap account is a full administrator managing accounts", me.get("role") == "full" and me.get("manageAdmins") is True, str(me.get("role")))
+    staff = {}
+    for role, email in (("crm", "assistante@example.test"), ("technician", "technicien@example.test")):
+        r = api.post("/api/cms/admins", headers=auth(owner), data={"name": f"Fixture {role}", "email": email, "password": "fixture-password-123456", "role": role, "mailAccess": "none"})
+        check(f"owner creates a {role} account", r.status == 201, f"{r.status} {r.text()[:150]}")
+        staff[role] = (email, login(email, "fixture-password-123456"))
+    crm_t, tech_t = staff["crm"][1], staff["technician"][1]
+    r = api.post("/api/cms/admins", headers=auth(crm_t), data={"name": "X", "email": "x@example.test", "password": "fixture-password-123456", "role": "full"})
+    check("CRM account cannot create accounts", r.status in (401, 403), str(r.status))
+    crm_me = api.get("/api/cms/admins/me", headers=auth(crm_t)).json()["user"]
+    api.patch(f"/api/cms/admins/{crm_me['id']}", headers=auth(crm_t), data={"role": "full", "name": "Assistante"})
+    check("own profile cannot be raised", api.get("/api/cms/admins/me", headers=auth(crm_t)).json()["user"]["role"] == "crm")
+    ticket = api.post("/api/cms/tickets", headers=auth(owner), data={"subject": "Panne imprimante fixture", "category": "reseaux-cloud", "description": "Ne s’allume plus", "client": client_a}).json().get("doc", {}).get("id")
+    check("fixture ticket created", ticket is not None)
+    def status(method, url, token, data=None):
+        return getattr(api, method)(url, headers=auth(token), **({"data": data} if data is not None else {})).status
+    def readable(url, token):
+        r = api.get(url, headers=auth(token))
+        return r.status == 200 and r.json().get("totalDocs", 0) > 0
+    # CRM-only account.
+    check("CRM: reads CRM data and site requests", readable("/api/cms/crm-deals", crm_t) and readable("/api/cms/contact-requests", crm_t))
+    check("CRM: no Support data", not readable("/api/cms/tickets", crm_t) and not readable("/api/cms/ticket-notes", crm_t) and not readable("/api/cms/client-accounts", crm_t))
+    check("CRM: no site content write", status("post", "/api/cms/projects", crm_t, {"name": "x"}) in (401, 403))
+    r = api.post("/api/cms/crm-documents", headers=auth(crm_t), data={"kind": "quote", "title": "Devis préparé par l’assistante", "client": client_a, "lines": [{"description": "Audit", "quantity": 1, "unitPrice": 100000}]})
+    draft = r.json().get("doc", {}).get("id") if r.ok else None
+    check("CRM: prepares a draft quote", r.status == 201, f"{r.status} {r.text()[:150]}")
+    r = api.patch(f"/api/cms/crm-documents/{draft}", headers=auth(crm_t), data={"status": "sent"})
+    check("CRM: cannot issue it", r.status == 400 and "administrateur complet" in r.text(), f"{r.status} {r.text()[:150]}")
+    # Technician.
+    check("technician: reads and handles tickets", readable("/api/cms/tickets", tech_t)
+          and status("patch", f"/api/cms/tickets/{ticket}", tech_t, {"status": "in-progress"}) == 200
+          and status("post", "/api/cms/ticket-notes", tech_t, {"ticket": ticket, "note": "Passage prévu demain"}) == 201)
+    check("technician: cannot delete a ticket", status("delete", f"/api/cms/tickets/{ticket}", tech_t) in (401, 403))
+    check("technician: company readable, not editable", readable("/api/cms/clients", tech_t) and status("patch", f"/api/cms/clients/{client_a}", tech_t, {"name": "x"}) in (401, 403))
+    check("technician: no CRM or site requests", not readable("/api/cms/crm-deals", tech_t) and not readable("/api/cms/contact-requests", tech_t))
+    # Interfaces.
+    for role, path in (("crm", "/crm"), ("technician", "/admin")):
+        c = browser.new_context(viewport={"width": 1440, "height": 900}, locale="fr-FR")
+        pg = c.new_page()
+        pg.on("pageerror", lambda e: errors.append(str(e)))
+        pg.goto(BASE + "/admin/login?redirect=%2Fcrm" if role == "crm" else BASE + "/admin/login")
+        pg.fill("input[name=email]", staff[role][0])
+        pg.fill("input[name=password]", "fixture-password-123456")
+        pg.locator("button[type=submit]").click()
+        pg.wait_for_load_state("networkidle")
+        pg.wait_for_timeout(1500)
+        if role == "crm":
+            check("CRM: login lands in /crm", "/crm" in pg.url, pg.url)
+            pg.goto(BASE + "/admin")
+            pg.wait_for_load_state("networkidle")
+            check("CRM: /admin sends to /crm", "/crm" in pg.url and "/admin" not in pg.url, pg.url)
+            check("CRM: home without Support tickets", pg.locator("section[aria-labelledby=today-tickets]").count() == 0 and pg.locator("h1").inner_text() == "Aujourd’hui")
+            check("CRM: footer links to own account", pg.locator("a[href='/admin/account']").count() == 1)
+            pg.goto(f"{BASE}/crm/documents/{draft}")
+            body = pg.locator("main").inner_text()
+            check("CRM: draft page without issuing actions", "réservés à un administrateur complet" in body and pg.locator("button", has_text="Envoyer").count() == 0, body[:200])
+            pg.goto(f"{BASE}/crm/clients/{client_a}")
+            check("CRM: company page without Support summary", "Support client" not in pg.locator("main").inner_text())
+            pg.screenshot(path=f"{OUT}/profile-crm.png", full_page=True)
+        else:
+            body = pg.locator("body").inner_text()
+            check("technician: dashboard shows tickets only", "Tickets à traiter" in body and "Demandes de contact" not in body and "Ouvrir le CRM" not in body, body[:300])
+            nav = pg.locator("nav").first.inner_text()
+            check("technician: menu without CRM or site content", "CRM clients" not in nav and "Pages" not in nav and "Médias" not in nav, nav[:300])
+            pg.screenshot(path=f"{OUT}/profile-technician.png", full_page=True)
+            check("technician: /crm refused", pg.goto(BASE + "/crm").status == 404)
+        c.close()
+
     # Phone width: no page-level horizontal scroll.
     mobile = browser.new_context(viewport={"width": 390, "height": 844}, locale="fr-FR", storage_state=ctx.storage_state())
     m = mobile.new_page()
@@ -514,8 +668,10 @@ with sync_playwright() as p:
     width = m.evaluate("document.documentElement.scrollWidth")
     check("mobile 390px WhatsApp panel fits", width <= 390, str(width))
     m.screenshot(path=f"{OUT}/crm-mobile-whatsapp.png", full_page=True)
-    for path in ["/crm", "/crm/opportunites", f"/crm/clients/{client_a}", "/crm/taches", "/crm/clients/importer"]:
+    preview = final_url.replace(BASE, "") + "/apercu"
+    for path in ["/crm", "/crm/suivi", "/crm/opportunites", f"/crm/clients/{client_a}", wa_page, "/crm/clients", "/crm/taches", "/crm/clients/importer", preview]:
         m.goto(BASE + path)
+        check(f"mobile page found {path}", m.locator("h1").count() == 1 and "404" not in m.locator("h1").inner_text())
         width = m.evaluate("document.documentElement.scrollWidth")
         check(f"mobile 390px no overflow {path}", width <= 390, str(width))
         m.screenshot(path=f"{OUT}/crm-mobile{path.replace('/', '-')}.png", full_page=True)

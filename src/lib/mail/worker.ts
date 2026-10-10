@@ -2,12 +2,14 @@ import { randomUUID } from "node:crypto";
 import { database } from "../database";
 import { contactSMTPTransport } from "../contact-smtp";
 import { mailStatus, type Credential } from "./config";
-import { mailDeps } from "./service";
+import { imapSyncAll } from "./imap-sync";
+import { isImap, mailDeps } from "./service";
 import type { MailStore } from "./store";
 import { syncAll } from "./sync";
-// Production only (mailStatus: MAIL_ENABLED, production origin, certificates present).
-// Every 2 minutes: Inbox and Sent Items deltas, interrupted sends → uncertain, linking,
-// non-delivery reports. Once a day: certificate expiry alerts.
+// Production only (mailStatus: MAIL_ENABLED, production origin, credentials present).
+// Every 2 minutes: Inbox and Sent (Graph deltas, or IMAP UIDs for Simafri), interrupted
+// sends → uncertain, linking, non-delivery reports. Microsoft only, once a day: certificate
+// expiry alerts. Only the configured provider runs.
 export const CERT_THRESHOLDS = [30, 14, 7, 1, 0];
 export function daysLeft(notAfter: Date, now = Date.now()) {
   return Math.floor((notAfter.getTime() - now) / 86_400_000);
@@ -44,13 +46,13 @@ export function startMailWorker() {
   let stopping = false, timer: ReturnType<typeof setTimeout> | undefined, lastCertCheck = 0;
   const poll = async () => {
     try {
-      const r = await syncAll(deps.graph, deps.store);
+      const r = isImap(deps) ? await imapSyncAll(deps.imap, deps.store) : await syncAll(deps.graph, deps.store);
       const errors = r.results.filter((x) => x.error || x.reset).map((x) => `${x.folder}:${x.error ?? "reset"}`);
       if (errors.length) console.error("crm-mail: sync", errors.join(" "));
     } catch {
       console.error("crm-mail: sync-unavailable");
     }
-    if (Date.now() - lastCertCheck > 86_400_000) {
+    if (status.provider === "graph" && Date.now() - lastCertCheck > 86_400_000) {
       lastCertCheck = Date.now();
       try {
         const send = alertTo && process.env.SMTP_ENABLED === "true"

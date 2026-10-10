@@ -135,3 +135,4 @@
 .site-header nav a.nav-language{font-size:13px;font-weight:600;letter-spacing:.08em;color:var(--muted)}
 .site-header nav a.nav-language:hover{color:var(--ink)}
 @media(max-width:650px){.site-header nav a.nav-language{font-size:15px;border-bottom:0;margin-top:6px}}
+.service-cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;margin-top:22px}.service-case{border:1px solid #dfe7f0;border-top:1px solid #96b0cd;padding:22px 20px}.service-case h3{font-size:22px;margin-bottom:5px}.service-case__project{color:#3f5573;font-size:15px;font-weight:600}.service-case p{color:var(--muted);font-size:16px;line-height:1.45;margin-top:9px}.service-case .text-link{font-size:15px}@media(max-width:650px){.service-cases{grid-template-columns:1fr;gap:16px}.service-case{padding:20px 18px}.service-case h3{font-size:21px}}

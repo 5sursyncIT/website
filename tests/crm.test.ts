@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { csv, csvCell, defaultProbability, isOpenStage, money, safeBack, weighted, withMessage } from "../src/lib/crm";
+import { csv, csvCell, defaultProbability, isActiveProspect, isOpenStage, missingNextAction, money, prospectPriority, prospectStageLabel, prospectStageOf, safeBack, weighted, withMessage } from "../src/lib/crm";
+import { priorityLabel, priorityRank, waitingState } from "../src/lib/support";
+import { serviceLabel, serviceTopic, services, topics } from "../src/lib/contact-topics";
+import { localePath } from "../src/lib/locale";
+import { contactSchema } from "../src/lib/validation";
+import { clientSchema } from "../src/lib/crm-schema";
+// Minimal valid payload of the public contact form, reused by the service-context test.
+const base = { name: "Visiteur", company: "Societe", email: "v@example.test", phone: "", message: "Dix caracteres au moins.", topic: "reseaux-cloud", website: "" };
 
 test("CSV cells neutralise spreadsheet formulas and quote separators", () => {
   assert.equal(csvCell("=HYPERLINK(\"x\")"), "\"'=HYPERLINK(\"\"x\"\")\"");
@@ -171,4 +178,118 @@ test("media file names: accents allowed, paths refused", async () => {
     assert.ok(isMediaFilename(ok), ok);
   for (const bad of ["../secret.png", "a/b.png", "a\\b.png", ".env", "x..png", "", "a".repeat(201), "logo%2F.png", "nul\0.png"])
     assert.ok(!isMediaFilename(bad), JSON.stringify(bad));
+});
+
+test("flash messages keep the anchor after the query string", () => {
+  assert.equal(withMessage("/crm/clients/7#suivi", "ok", "Fait"), "/crm/clients/7?ok=Fait#suivi");
+  assert.equal(withMessage("/crm/clients/7?etape=lost#suivi", "ok", "Raison"), "/crm/clients/7?etape=lost&ok=Raison#suivi");
+});
+
+test("commercial follow-up stages", () => {
+  // A company created before the follow-up (no stage stored) is « À contacter ».
+  assert.equal(prospectStageOf(null), "to-contact");
+  assert.equal(prospectStageOf("bogus"), "to-contact");
+  assert.equal(prospectStageLabel("on-hold"), "En attente (budget)");
+  for (const stage of ["to-contact", "contacted", "engaged", "need", "meeting", "quote", "on-hold", null])
+    assert.ok(isActiveProspect(stage), String(stage));
+  assert.ok(!isActiveProspect("won") && !isActiveProspect("lost"));
+  // The most advanced conversations are planned first.
+  const order = ["to-contact", "contacted", "on-hold", "engaged", "need", "meeting", "quote"].sort((a, b) => prospectPriority(a) - prospectPriority(b));
+  assert.deepEqual(order, ["quote", "meeting", "need", "engaged", "on-hold", "contacted", "to-contact"]);
+});
+test("ticket urgency and who owes an answer are read from the replies", () => {
+  // Triage order: urgent first, unknown value treated as normal (never as most urgent).
+  const order = ["normal", "urgent", "low", "high"].sort((a, b) => priorityRank(a) - priorityRank(b));
+  assert.deepEqual(order, ["urgent", "high", "normal", "low"]);
+  assert.equal(priorityRank("bogus"), priorityRank("normal"));
+  assert.equal(priorityLabel("urgent"), "Urgente");
+  assert.equal(priorityLabel(null), "Normale");
+  const ticket = { id: 7, createdAt: "2026-10-01T08:00:00.000Z" };
+  const team = (at: string) => ({ ticket: 7, author: { relationTo: "admins" }, createdAt: at });
+  const client = (at: string) => ({ ticket: 7, author: { relationTo: "client-accounts" }, createdAt: at });
+  // No reply at all: waiting since the ticket was opened, not since updatedAt.
+  let state = waitingState(ticket, []);
+  assert.equal(state.awaiting, true);
+  assert.equal(state.since, "2026-10-01T08:00:00.000Z");
+  assert.equal(state.team, null);
+  // The team answered last: nothing is owed.
+  state = waitingState(ticket, [client("2026-10-02T08:00:00.000Z"), team("2026-10-03T08:00:00.000Z")]);
+  assert.equal(state.awaiting, false);
+  assert.equal(state.since, "2026-10-03T08:00:00.000Z");
+  // The client spoke last: the team owes an answer since that message.
+  state = waitingState(ticket, [team("2026-10-03T08:00:00.000Z"), client("2026-10-04T09:30:00.000Z")]);
+  assert.equal(state.awaiting, true);
+  assert.equal(state.since, "2026-10-04T09:30:00.000Z");
+  // Replies of another ticket never count.
+  state = waitingState(ticket, [{ ticket: 99, author: { relationTo: "admins" }, createdAt: "2026-10-05T08:00:00.000Z" }]);
+  assert.equal(state.awaiting, true);
+  assert.equal(state.team, null);
+});
+test("next action rule: an alert everywhere, never a refusal", () => {
+  // The rule the pages, the board, the save message and the import all share.
+  assert.ok(missingNextAction("meeting", 0));
+  assert.ok(!missingNextAction("meeting", 1));
+  // A closed company owes nothing.
+  assert.ok(!missingNextAction("won", 0));
+  assert.ok(!missingNextAction("lost", 0));
+  // A company with no stage stored counts as active ("À contacter").
+  assert.ok(missingNextAction(null, 0));
+});
+test("service context of the contact form stays bounded", () => {
+  assert.equal(serviceTopic("reseaux-cloud"), "reseaux-cloud");
+  assert.equal(serviceLabel("solutions-metier"), "Solutions métier");
+  // An invented page is not a service: no label, no preselected need.
+  assert.equal(serviceTopic("page-inventee"), "");
+  assert.equal(serviceLabel("page-inventee"), "");
+  assert.equal(serviceTopic(null), "");
+  // Every service maps to a real need of the contact form.
+  for (const [slug] of services) assert.ok(topics.some(([t]) => t === serviceTopic(slug)), slug);
+  // The schema accepts a known service, an empty one, and refuses anything else.
+  assert.equal(contactSchema.safeParse({ ...base, service: "reseaux-cloud" }).success, true);
+  assert.equal(contactSchema.safeParse({ ...base, service: "" }).success, true);
+  assert.equal(contactSchema.safeParse({ ...base }).success, true);
+  assert.equal(contactSchema.safeParse({ ...base, service: "page-inventee" }).success, false);
+  assert.equal(contactSchema.safeParse({ ...base, service: "<script>" }).success, false);
+});
+test("localised links keep their query string", () => {
+  // /contact?service=… must reach the English contact page, not the French one.
+  assert.equal(localePath("en", "/contact?service=reseaux-cloud"), "/en/contact?service=reseaux-cloud");
+  assert.equal(localePath("en", "/realisations#groupe-hage"), "/en/projects#groupe-hage");
+  assert.equal(localePath("en", "/contact"), "/en/contact");
+  assert.equal(localePath("fr", "/contact?service=reseaux-cloud"), "/contact?service=reseaux-cloud");
+});
+test("service case studies point at real published projects", async () => {
+  // Every anchor chosen for a service page must exist in the shipped case studies,
+  // otherwise the page would link to /realisations#nothing.
+  const { caseStudySeeds, serviceCaseAnchors } = await import("../src/lib/showcase");
+  const historical = (await import("../src/content/historical-cases.json", { with: { type: "json" } })).default as { anchor: string }[];
+  const known = new Set([...caseStudySeeds.map((c) => c.anchor), ...historical.map((c) => c.anchor)]);
+  for (const [service, anchors] of Object.entries(serviceCaseAnchors)) {
+    assert.ok(anchors.length >= 2, `${service}: ${anchors.length} réalisation(s)`);
+    for (const anchor of anchors) assert.ok(known.has(anchor), `${service} → ${anchor}`);
+  }
+});
+test("besoins d'une entreprise : vocabulaire partagé et valeurs bornées", () => {
+  // Les besoins d'une fiche, le sujet du formulaire public et la catégorie d'un ticket
+  // utilisent la même liste : une demande convertie se range sans traduction.
+  const champs = { name: "Société", stage: "prospect" as const, source: "", sector: "", registration: "",
+    email: "", phone: "", website: "", address: "", city: "", country: "", notes: "", needsDetail: "" };
+  const ok = clientSchema.safeParse({ ...champs, needs: ["reseaux-cloud", "maintenance-support"] });
+  assert.equal(ok.success, true);
+  assert.deepEqual(ok.success && ok.data.needs, ["reseaux-cloud", "maintenance-support"]);
+  // Aucun besoin : tableau vide, jamais undefined, pour que la fiche sache quoi afficher.
+  const vide = clientSchema.safeParse(champs);
+  assert.equal(vide.success && Array.isArray(vide.data.needs) && vide.data.needs.length, 0);
+  // Un besoin inventé est refusé : la liste reste celle des services réellement proposés.
+  assert.equal(clientSchema.safeParse({ ...champs, needs: ["besoin-invente"] }).success, false);
+  // Chaque besoin possible correspond à un sujet du formulaire public.
+  for (const [sujet] of topics)
+    assert.equal(clientSchema.safeParse({ ...champs, needs: [sujet] }).success, true, sujet);
+});
+test("les besoins ne s'importent pas depuis un fichier CSV", async () => {
+  // Ils se renseignent au fil des échanges et à la conversion d'une demande, jamais
+  // par une colonne de tableur : une réimportation ne doit pas les écraser.
+  const { fieldLabels } = await import("../src/lib/crm-import");
+  assert.ok(!("needs" in fieldLabels) && !("needsDetail" in fieldLabels));
+  assert.ok("name" in fieldLabels && "notes" in fieldLabels);
 });

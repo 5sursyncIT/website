@@ -1,14 +1,15 @@
 import { cache } from "react";
 import { notFound, redirect } from "next/navigation";
 import { identity } from "@/lib/backend";
-import { isAdmin } from "@/lib/access";
-// Every /crm page, server action and export goes through this guard: Payload admins
-// only. Anonymous visitors are sent to the admin login, client accounts get a 404.
+import { canUseCRM, isFullAdmin } from "@/lib/access";
+// Every /crm page, server action and export goes through this guard: full administrators
+// and CRM-only accounts. Anonymous visitors are sent to the admin login; client accounts
+// and technicians get a 404. "full" unlocks Support data and issuing documents.
 export const crmContext = cache(async () => {
   const context = await identity();
   if (!context.user) redirect("/admin/login?redirect=%2Fcrm");
-  if (!isAdmin(context.user)) notFound();
-  return { payload: context.payload, user: context.user };
+  if (!canUseCRM(context.user)) notFound();
+  return { payload: context.payload, user: context.user, full: isFullAdmin(context.user) };
 });
 export type CRMContext = Awaited<ReturnType<typeof crmContext>>;
 // Local API calls always run with the admin's own permissions.

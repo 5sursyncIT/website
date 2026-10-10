@@ -1,5 +1,10 @@
 # CRM ↔ boîte partagée Microsoft 365 contact@5sursync.com
 
+> **9 octobre 2026 — remplacée par Simafri (SMTP/IMAP)** pour la messagerie du CRM, après les
+> deux rejets 550 5.7.708 de la recette (fin de ce document). Ce connecteur reste dans le code,
+> sélectionnable par `MAIL_PROVIDER=graph`, pour le retour arrière ; applications Entra,
+> certificats et données Microsoft ne sont pas modifiés. Voir `messagerie-simafri.md`.
+
 **Statut au 8 octobre 2026 (17:35 UTC)** : plan **validé par le propriétaire** (option B,
 assistante en brouillon seulement, étapes Microsoft par Charlie, sinon par le propriétaire).
 Fait : isolation de la préproduction (section 7, « Réalisé ») ; deux certificats générés sur le
@@ -311,7 +316,8 @@ Tél. +221 33 805 79 09 · +221 77 097 29 08 · WhatsApp +221 76 881 30 39
 contact@5sursync.com · https://5sursync.com
 ```
 
-Ajoutée une seule fois (bloc marqué `data-5sync-signature`, détecté avant tout ajout).
+Ajoutée une seule fois (tableau `id`/`class` = `sync5-signature`, détecté avant tout ajout ;
+corrigé le 9/10 : le code n'a jamais utilisé `data-5sync-signature`).
 Rendu exact à valider sur capture avant la recette.
 
 ## 10. Certificats : renouvellement et alerte
@@ -470,3 +476,89 @@ applications : seuls l'étape 5 de la section 4 et les contrôles ci-dessous le 
    Microsoft », puis « Présent dans les Éléments envoyés » ; expéditeur contact@ vu par le
    destinataire ; réponse du destinataire rattachée au même fil.
 6. Absence de doublons après deux synchronisations.
+
+### Recette réelle — 9 octobre 2026 (en cours, ni production ni préproduction modifiées)
+Étapes Entra/Exchange faites par le propriétaire : `Test-ServicePrincipalAuthorization` True pour
+contact@, False pour ydiop@, pour chaque application. AppId lecture-brouillons
+`3e51bee4-4a6b-42ab-95a2-cba6ac7a5517`, envoi `2f978a1d-831d-432f-a4c6-613f22b0b7d2`, ObjectId de
+la boîte `8b3a8727-e9ac-480b-acac-7b6c5f18e482` (identifiants, pas des secrets).
+Preuves et scripts : `documentation/qa/m365-recette/`.
+
+- **a. Lecture et refus (script autonome, GET uniquement, 10:30 UTC) : RÉUSSI.** Jetons des deux
+  applications obtenus par certificat (HTTP 200, aucun rôle Entra dans le jeton : droits portés
+  uniquement par Exchange RBAC). contact@ lisible (200) ; ydiop@ refusé (403
+  `ErrorAccessDenied`) pour les deux applications ; l'application envoi ne peut pas lire contact@
+  (403). Aucun appel d'envoi. Seuls codes et compteurs affichés.
+- **b. Brouillons (banc jetable, 10:32 UTC).** Script `recette-b.ts` lancé dans l'image
+  `5sursync:admin-crm-link-preprod-20261009`, base PostgreSQL jetable `recette_test`, aucun port
+  publié. Pas de serveur Next, donc **pas de worker, pas de synchronisation, pas de reprise
+  90 jours** ; seuls les messages de `youssouphadiop@hotmail.fr` sont lus (filtre Microsoft
+  + contrôle local). Envoi impossible : garde réseau (seuls jeton lecture, GET/POST/PATCH des
+  chemins de brouillon de contact@ ; `/send`, `/reply`, `/forward`… refusés avant sortie),
+  identité d'envoi factice non enregistrée dans Entra, `MAIL_SEND_ALLOWLIST` vide, acteur au
+  niveau « brouillons ».
+  - Brouillon neuf (CRM n°1, objet « [RECETTE 5sursync] Brouillon de test – ne pas envoyer », à
+    youssouphadiop@hotmail.fr) : présent dans Brouillons, `isDraft` vrai, signature une fois
+    (première ligne et slogan 1 fois), logo inline `5sync-it.jpg` référencé une fois.
+  - Message de test déjà présent : 1 message de l'adresse de test, reçu le 08/10 à 17:25 UTC,
+    objet « TEST ».
+  - Réponse en brouillon dans le fil : **en attente de la confirmation du propriétaire**.
+  - Rendu visuel de la signature et du logo dans Outlook : **à vérifier par le propriétaire** ;
+    brouillons conservés jusqu'à sa validation.
+- 9/10, 10:39 UTC, à la demande du propriétaire (boîte nettoyée le matin, anciens messages et
+  brouillons à ignorer) : nouveau brouillon CRM n°2 « [RECETTE 5sursync] Nouveau test signature –
+  09/10/2026 10:39 (heure de Dakar, UTC) » à youssouphadiop@hotmail.fr, dans Brouillons,
+  signature une fois, logo inline une fois. Rendu visuel à valider par le propriétaire dans Outlook.
+- Expéditeur (9/10, 10:45 UTC, lecture seule) : le propriétaire voit « De : ydiop@5sursync.com »
+  en ouvrant le brouillon n°2 dans Outlook. Graph : `from` et `sender` **vides** sur le brouillon,
+  `changeKey` inchangé depuis la création (Outlook n'a rien enregistré). Le CRM ne fixe aucun
+  expéditeur ; Outlook propose donc le compte par défaut de la personne qui ouvre le brouillon.
+  Chemin d'envoi du CRM : `POST /users/{ObjectId contact@}/messages/{id}/send` avec l'application
+  envoi, limitée par Exchange à contact@ (ydiop@ InScope False) : l'expéditeur attendu est la boîte
+  qui contient le message, contact@. Non prouvé tant qu'aucun envoi réel : à contrôler lors de
+  l'envoi de recette (`from`/`sender` de l'élément envoyé et en-têtes chez le destinataire).
+  Risque : un brouillon envoyé **depuis Outlook** avec « De » laissé sur ydiop@ partirait de ydiop@.
+- **Correctif expéditeur (9/10, code testé sur banc, non déployé)** :
+  - `service.ts` : `from` et `sender` = adresse de la boîte (`MAIL_MAILBOX_ADDRESS`) à la
+    création d'un brouillon (`POST /messages`), dans le `PATCH` d'une réponse (`createReply`) et à
+    chaque réenregistrement (`updateDraft`).
+  - Avant tout envoi (`sendAuthorizedDraft`), lecture du brouillon par `/users/{contact@}` puis
+    `rules.ts` `senderRefusal` : envoi **bloqué avant tout appel d'envoi** si le brouillon est
+    introuvable dans contact@, si `from` est vide ou différent de contact@, ou si `sender` est
+    renseigné et différent ; message d'erreur explicite dans le CRM. Ce contrôle précède celui de
+    la modification dans Outlook et la liste de recette.
+  - Faux Graph : `from`/`sender` conservés, contact@ par défaut à l'envoi (comportement Exchange),
+    contrôle `set-from`. Tests : unitaire « sender » ; intégration +8 (brouillon et réponse avec
+    contact@, blocage De = ydiop@, De vide, sender = ydiop@, brouillon hors boîte, aucun envoi et
+    état inchangé, message envoyé avec contact@). Résultats : typecheck 0, unitaires 49/9 ignorés,
+    intégration 66/66, navigateur 48/48. Image de banc `5sursync:mail-sender-test-20261009`.
+  - Réel (10:56 UTC) : brouillon n°3 « [RECETTE 5sursync] Test expéditeur contact@ – 09/10/2026
+    10:56 » ; Graph renvoie `from` et `sender` = contact@5sursync.com (nom affiché « contact »,
+    nom d'affichage de la boîte dans Exchange). Affichage du champ De dans Outlook à confirmer par
+    le propriétaire. Aucun envoi.
+- **Envoi réel unique (9/10, 11:11 UTC, autorisé par le propriétaire)** depuis le banc, par le
+  chemin du CRM (`sendAuthorizedDraft`) et l'application envoi ; `MAIL_SEND_ALLOWLIST` =
+  youssouphadiop@hotmail.fr ; garde : un seul `POST /send`, pour le seul brouillon créé dans
+  l'exécution, refus si une tentative existe déjà. Brouillon n°4 « [RECETTE 5sursync] Envoi de
+  test unique – 09/10/2026 11:11 (heure de Dakar, UTC) » (signature 1, logo 1) : **« accepted »
+  (202)**, 1 appel d'envoi. Vérification lecture seule (`verifyDraft`, 11:11:13) : état
+  **in_sent**, 1 élément dans les Éléments envoyés de contact@, `isDraft` faux, `from` et
+  `sender` = contact@5sursync.com, destinataire youssouphadiop@hotmail.fr, envoyé 11:11:05 UTC.
+  **Non livré** : rapport de non-remise reçu dans contact@ à 11:11:07 UTC, `550 5.7.708 Service
+  unavailable. Access denied, traffic not accepted from this IP … AS(7230)` (statut Failed confirmé
+  par Charlie dans le suivi Exchange ; locataire alors en essai gratuit). 202 et présence dans les
+  Éléments envoyés ne prouvaient pas la livraison.
+- **Second envoi unique (9/10, 11:38:59 UTC, autorisé après passage à l'abonnement payant)**, même
+  chemin et mêmes gardes (garde par objet : une seule tentative par objet de recette). Brouillon
+  n°5 « [RECETTE 5sursync] Vérification envoi après passage au payant – 09/10/2026 11:38 UTC » :
+  202 « accepted », 1 appel d'envoi, Message-ID
+  `<AS2PR09MB5959FB98858BD1E1D9A2A82C93922@AS2PR09MB5959.eurprd09.prod.outlook.com>` ; dans les
+  Éléments envoyés avec from et sender = contact@5sursync.com. **Rapport de non-remise à 11:39:02 :
+  même rejet 550 5.7.708 AS(7230)** `[AS8PR09MB6433.eurprd09.prod.outlook.com
+  2026-10-09T11:38:59.711Z 08DF249A4A1BE975]`. **Essais arrêtés** ; aucune permission élargie, DNS
+  non modifié. Suivi Exchange non accessible à l'agent. Dossier pour le support Microsoft :
+  `documentation/qa/m365-recette/support-microsoft-5.7.708.md`.
+  Le code de l'envoi, les droits Graph/Exchange et l'expéditeur fonctionnent ; le blocage est la
+  restriction d'envoi sortant du locataire côté Microsoft.
+- Non fait (feu vert séparé) : activation en production ; réponse en brouillon dans un fil (attend un
+  nouveau message de test) ; rattachement de la réponse du destinataire.

@@ -46,6 +46,8 @@ export async function POST(request: Request) {
         client: Number(owner),
         author: { relationTo: "client-accounts", value: Number(user!.id) },
         status: "open",
+        // Triage priority belongs to the team: a client never chooses it.
+        priority: "normal",
       },
     });
     return Response.json({ id: ticket.id }, { status: 201 });

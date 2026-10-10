@@ -9,6 +9,11 @@ import * as migration_20261008_102236_crm_v2 from './20261008_102236_crm_v2';
 import * as migration_20261008_112152_crm_v3 from './20261008_112152_crm_v3';
 import * as migration_20261008_173554_crm_mail from './20261008_173554_crm_mail';
 import * as migration_20261008_185702_admin_rights from './20261008_185702_admin_rights';
+import * as migration_20261009_150000_crm_mail_imap from './20261009_150000_crm_mail_imap';
+import * as migration_20261010_020200_crm_suivi from './20261010_020200_crm_suivi';
+import * as migration_20261010_105721_admin_roles from './20261010_105721_admin_roles';
+import * as migration_20261010_113500_backup_state from './20261010_113500_backup_state';
+import * as migration_20261010_155457_client_needs from './20261010_155457_client_needs';
 
 export const migrations = [
   {
@@ -64,6 +69,31 @@ export const migrations = [
   {
     up: migration_20261008_185702_admin_rights.up,
     down: migration_20261008_185702_admin_rights.down,
-    name: '20261008_185702_admin_rights'
+    name: '20261008_185702_admin_rights',
+  },
+  {
+    up: migration_20261009_150000_crm_mail_imap.up,
+    down: migration_20261009_150000_crm_mail_imap.down,
+    name: '20261009_150000_crm_mail_imap',
+  },
+  {
+    up: migration_20261010_020200_crm_suivi.up,
+    down: migration_20261010_020200_crm_suivi.down,
+    name: '20261010_020200_crm_suivi',
+  },
+  {
+    up: migration_20261010_105721_admin_roles.up,
+    down: migration_20261010_105721_admin_roles.down,
+    name: '20261010_105721_admin_roles',
+  },
+  {
+    up: migration_20261010_113500_backup_state.up,
+    down: migration_20261010_113500_backup_state.down,
+    name: '20261010_113500_backup_state',
+  },
+  {
+    up: migration_20261010_155457_client_needs.up,
+    down: migration_20261010_155457_client_needs.down,
+    name: '20261010_155457_client_needs'
   },
 ];

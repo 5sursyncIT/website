@@ -35,7 +35,18 @@ const englishStatus = (status: number) =>
   : status === 400 ? "Please check the form fields."
   : status === 429 ? "Too many requests. Please try again later."
   : copy.en.failed;
-export function ContactForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
+// `topic` preselects "Votre besoin" when the visitor arrives from a service page, and
+// `service` records which page that was. Both are stored with the request so the CRM
+// knows what the person was reading when they wrote (see api/contact/route.ts).
+export function ContactForm({
+  locale = "fr",
+  topic = "",
+  service = "",
+}: {
+  locale?: "fr" | "en";
+  topic?: string;
+  service?: string;
+}) {
   const l = copy[locale];
   const submission = useRef<{key:string;body:string}|null>(null);
   const submitting = useRef(false);
@@ -104,7 +115,7 @@ export function ContactForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
         </label>
         <label className="full">
           {l.topic}
-          <select name="topic" required>
+          <select name="topic" required defaultValue={topics.some(([v]) => v === topic) ? topic : ""}>
             <option value="">{l.choose}</option>
             {topics.map(([value]) => (
               <option value={value} key={value}>
@@ -124,6 +135,7 @@ export function ContactForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
           />
         </label>
       </div>
+      {service && <input type="hidden" name="service" value={service} />}
       <label className="honeypot" aria-hidden="true">
         {l.website}
         <input name="website" tabIndex={-1} autoComplete="off" />

@@ -1,17 +1,25 @@
 import { pageMetadata } from "@/lib/page-meta";
 import Content from "@/content/contact";
 import { pageContent } from "@/lib/content";
+import { serviceTopic } from "@/lib/contact-topics";
 export const revalidate = 300;
 export async function generateMetadata() {
   const p = await pageContent("contact");
   return pageMetadata("/contact", p, "en");
 }
-export default async function Page() {
-  const p = await pageContent("contact");
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [p, search] = await Promise.all([pageContent("contact"), searchParams]);
+  const asked = typeof search.service === "string" ? search.service : "";
+  const service = serviceTopic(asked) ? asked : "";
   return (
     <Content
       locale="en"
       texts={Object.fromEntries((p.texts || []).map((x) => [x.key, x.value]))}
+      service={service}
     />
   );
 }

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { as, formatDateTime } from "@/lib/crm-server";
 import { canMail } from "@/lib/mail/access";
 import { mailContext, mailUnavailable } from "@/lib/mail/crm";
-import { companyDomain } from "@/lib/mail/rules";
-import { readMessage } from "@/lib/mail/service";
+import { companyDomain, ndrKindLabel } from "@/lib/mail/rules";
+import { isImap, readMessage } from "@/lib/mail/service";
+import { ATTACHMENT_LIMITS } from "@/lib/mail/mime";
 import { Submit } from "@/components/crm/client";
 import { folderLabel, MessageRows } from "@/components/crm/mail";
 import { ClientLink, Flash, Head } from "@/components/crm/parts";
@@ -24,6 +25,7 @@ export default async function MessagePage({ params, searchParams }: { params: Pa
   if (!row) notFound();
   const back = `/crm/messagerie/${id}`;
   const canDraft = canMail({ mailAccess: actor.level }, "draft");
+  const imap = isImap(deps);
   const counterpart = row.folder === "inbox" ? row.from_address ?? "" : row.to_addresses[0] ?? "";
   const [suggested, thread, clients, contacts] = await Promise.all([
     deps.store.domainSuggestions(companyDomain(counterpart)),
@@ -42,7 +44,18 @@ export default async function MessagePage({ params, searchParams }: { params: Pa
         <div><span>Fiche</span><strong>{row.client_id ? <ClientLink client={{ id: row.client_id, name: clients?.docs.find((c) => c.id === row.client_id)?.name }} /> : "Non rattaché"}</strong>
           <small>{row.link_method === "auto" ? "rattachement automatique (adresse exacte)" : row.link_method === "manual" ? "rattachement manuel" : row.link_method === "draft" ? "envoyé depuis le CRM" : row.link_state === "ambiguous" ? "plusieurs fiches possibles" : ""}</small></div>
       </section>
-      {row.is_ndr && <p className="crm-flash crm-flash--error">Rapport de non-remise{row.ndr_recipients.length ? ` pour ${row.ndr_recipients.join(", ")} : adresse bloquée pour l’envoi.` : " (destinataire non identifié)."}</p>}
+      {row.is_ndr && (
+        <p className="crm-flash crm-flash--error">
+          Rapport de non-remise{row.ndr_recipients.length ? ` pour ${row.ndr_recipients.join(", ")}` : " (destinataire non identifié)"}
+          {row.ndr_kind ? ` : ${ndrKindLabel[row.ndr_kind] ?? row.ndr_kind}` : ""}
+          {row.ndr_kind === "address" ? ". Adresse bloquée pour l’envoi." : row.ndr_recipients.length ? ". Adresse non bloquée." : "."}
+        </p>
+      )}
+      {!row.client_id && canDraft && (() => {
+        // A reply to a message already attributed: a hint only, never an automatic link.
+        const linked = thread.find((t) => t.id !== row.id && t.client_id);
+        return linked ? <p className="crm-hint">Ce fil contient un message rattaché à <ClientLink client={{ id: linked.client_id!, name: clients?.docs.find((c) => c.id === linked.client_id)?.name }} />. À vérifier avant de rattacher.</p> : null;
+      })()}
       <div className="crm-cols crm-cols--wide">
         <div className="crm-stack">
           <section className="crm-card">
@@ -50,7 +63,7 @@ export default async function MessagePage({ params, searchParams }: { params: Pa
             {message ? (
               <>
                 <p className="crm-pre crm-mail-body">{message.body || "(message vide)"}</p>
-                <p className="crm-hint">Texte brut fourni par Microsoft. <a href={`/crm/messagerie/${id}/html`} target="_blank" rel="noopener noreferrer">Version mise en forme (onglet isolé, sans script ni image distante) ↗</a></p>
+                <p className="crm-hint">Texte brut fourni par la messagerie (lu sans marquer le message comme lu). <a href={`/crm/messagerie/${id}/html`} target="_blank" rel="noopener noreferrer">Version mise en forme (onglet isolé, sans script ni image distante) ↗</a></p>
                 {message.attachments.length > 0 && (
                   <>
                     <h3>Pièces jointes</h3>
@@ -74,8 +87,9 @@ export default async function MessagePage({ params, searchParams }: { params: Pa
                 <input type="hidden" name="back" value={back} />
                 <div className="crm-grid">
                   <label className="crm-span-all">Votre réponse<textarea name="text" rows={8} maxLength={20000} required /></label>
+                  {imap && <label className="crm-span-all">Pièces jointes ({ATTACHMENT_LIMITS.count} au plus, 4 Mo au total)<input type="file" name="files" multiple /></label>}
                 </div>
-                <p className="crm-hint">La réponse est créée en brouillon dans contact@, dans le même fil, avec la signature et la citation du message. Rien n’est envoyé.</p>
+                <p className="crm-hint">La réponse est créée en brouillon dans la boîte, dans le même fil (In-Reply-To, References), avec la signature et la citation du message. Rien n’est envoyé.</p>
                 <Submit>Préparer la réponse</Submit>
               </form>
             </section>

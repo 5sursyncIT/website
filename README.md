@@ -6,7 +6,9 @@ maquette converties et espace Support client avec invitations/tickets/fichiers p
 
 Version anglaise sous /en : [documentation/anglais.md](documentation/anglais.md).
 CRM clients interne sur /crm (admins) : [documentation/crm.md](documentation/crm.md).
-Boîte partagée Microsoft 365 contact@ dans le CRM : [documentation/microsoft365.md](documentation/microsoft365.md).
+Messagerie du CRM : boîte Simafri contact@crm.5sursync.com en SMTP/IMAP (nouvelle orientation, non activée) :
+[documentation/messagerie-simafri.md](documentation/messagerie-simafri.md) ; ancienne voie Microsoft 365, conservée
+pour le retour arrière : [documentation/microsoft365.md](documentation/microsoft365.md).
 Préproduction isolée (base, secret et volumes propres) : migrations à lancer sur les deux bases.
 
 Documentation de reprise : [documentation/REPRISE.md](documentation/REPRISE.md).

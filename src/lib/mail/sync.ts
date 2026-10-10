@@ -1,6 +1,6 @@
 import { Graph, GraphError, GraphUncertain } from "./graph";
 import { MailStore, type Folder, type GraphMessage } from "./store";
-import { isLikelyNdr, isNdrClass, ndrFailedRecipients } from "./rules";
+import { isLikelyNdr, isNdrClass, ndrFailedRecipients, ndrKindFromText } from "./rules";
 // Incremental synchronisation of Inbox and Sent Items (Graph delta query, per folder).
 // First run: messages received in the last N days (receivedDateTime ge …, Graph returns
 // at most 5,000 per folder in that case). Then only changes, from the saved deltaLink.
@@ -59,7 +59,7 @@ export async function syncFolder(graph: Graph, store: MailStore, folder: Folder,
 }
 
 // Reports flagged by sender/subject are confirmed by their message class, and their
-// text is read once to find which of our recipients failed. The text is not kept.
+// text is read once to find which of our recipients failed and why. The text is not kept.
 export async function checkNdrs(graph: Graph, store: MailStore) {
   const sentTo = await store.recentSentRecipients();
   let checked = 0;
@@ -71,7 +71,9 @@ export async function checkNdrs(graph: Graph, store: MailStore) {
       const klass = props.find((p) => /0x001A/i.test(p.id))?.value;
       const isNdr = klass ? isNdrClass(klass) : true;
       const text = String((res.json?.body as { content?: string } | undefined)?.content ?? "");
-      await store.recordNdr(m.id, isNdr ? ndrFailedRecipients(text, sentTo) : [], isNdr);
+      // Address unknown (5.1.x) vs transport blocked (e.g. 5.7.708): only the first blocks.
+      const kind = ndrKindFromText(text);
+      await store.recordNdr(m.id, isNdr ? ndrFailedRecipients(text, sentTo).map((address) => ({ address, kind })) : [], isNdr);
       checked++;
     } catch (error) {
       if (error instanceof GraphError && error.status === 404) await store.recordNdr(m.id, [], false);

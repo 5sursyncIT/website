@@ -5,7 +5,7 @@ import {
   HTTPError,
   readJSON,
 } from "@/lib/backend";
-import { isAdmin, relationID } from "@/lib/access";
+import { isFullAdmin, relationID } from "@/lib/access";
 import { newInvitation } from "@/lib/invitations";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   try {
     checkOrigin(request);
     const { payload, user } = await authenticated();
-    if (!isAdmin(user)) throw new HTTPError(403, "Accès réservé à l’équipe.");
+    if (!isFullAdmin(user)) throw new HTTPError(403, "Accès réservé aux administrateurs.");
     const result = schema.safeParse(await readJSON(request));
     if (!result.success) throw new HTTPError(400, "Données invalides.");
     await payload.findByID({
