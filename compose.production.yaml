@@ -34,10 +34,15 @@ services:
       MAIL_ENABLED: 'true'
       MAIL_PROVIDER: imap
       MAIL_PASSWORD_FILE: /run/secrets/crm_mail_password
-      MAIL_SEND_ALLOWLIST: youssouphadiop@hotmail.fr
+      # Destinataires autorisés pendant la recette. Valeur tenue hors du dépôt
+      # (public) : voir .env, non versionné. Vide ou absent = aucun envoi autorisé.
+      MAIL_SEND_ALLOWLIST: ${MAIL_SEND_ALLOWLIST:-}
     secrets: [database_uri, payload_secret, smtp_password, crm_mail_password]
     volumes: [private_files:/app/storage/private, public_media:/app/storage/media]
-    networks: [database, egress]
+    networks:
+      database: {}
+      egress: {}
+      charlie_identity: {aliases: [crm-app]}
     healthcheck:
       test: [CMD, node, -e, 'fetch("http://127.0.0.1:3000/api/health").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))']
       interval: 20s
@@ -54,3 +59,6 @@ secrets:
     file: ./secrets/smtp_password
   crm_mail_password:
     file: ./secrets/crm_mail_password
+
+networks:
+  charlie_identity: {external: true, name: charlie_crm_identity}

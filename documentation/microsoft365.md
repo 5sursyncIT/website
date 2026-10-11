@@ -492,13 +492,13 @@ Preuves et scripts : `documentation/qa/m365-recette/`.
 - **b. Brouillons (banc jetable, 10:32 UTC).** Script `recette-b.ts` lancé dans l'image
   `5sursync:admin-crm-link-preprod-20261009`, base PostgreSQL jetable `recette_test`, aucun port
   publié. Pas de serveur Next, donc **pas de worker, pas de synchronisation, pas de reprise
-  90 jours** ; seuls les messages de `youssouphadiop@hotmail.fr` sont lus (filtre Microsoft
+  90 jours** ; seuls les messages de `l’adresse de recette du propriétaire` sont lus (filtre Microsoft
   + contrôle local). Envoi impossible : garde réseau (seuls jeton lecture, GET/POST/PATCH des
   chemins de brouillon de contact@ ; `/send`, `/reply`, `/forward`… refusés avant sortie),
   identité d'envoi factice non enregistrée dans Entra, `MAIL_SEND_ALLOWLIST` vide, acteur au
   niveau « brouillons ».
   - Brouillon neuf (CRM n°1, objet « [RECETTE 5sursync] Brouillon de test – ne pas envoyer », à
-    youssouphadiop@hotmail.fr) : présent dans Brouillons, `isDraft` vrai, signature une fois
+    l’adresse de recette du propriétaire) : présent dans Brouillons, `isDraft` vrai, signature une fois
     (première ligne et slogan 1 fois), logo inline `5sync-it.jpg` référencé une fois.
   - Message de test déjà présent : 1 message de l'adresse de test, reçu le 08/10 à 17:25 UTC,
     objet « TEST ».
@@ -507,7 +507,7 @@ Preuves et scripts : `documentation/qa/m365-recette/`.
     brouillons conservés jusqu'à sa validation.
 - 9/10, 10:39 UTC, à la demande du propriétaire (boîte nettoyée le matin, anciens messages et
   brouillons à ignorer) : nouveau brouillon CRM n°2 « [RECETTE 5sursync] Nouveau test signature –
-  09/10/2026 10:39 (heure de Dakar, UTC) » à youssouphadiop@hotmail.fr, dans Brouillons,
+  09/10/2026 10:39 (heure de Dakar, UTC) » à l’adresse de recette du propriétaire, dans Brouillons,
   signature une fois, logo inline une fois. Rendu visuel à valider par le propriétaire dans Outlook.
 - Expéditeur (9/10, 10:45 UTC, lecture seule) : le propriétaire voit « De : ydiop@5sursync.com »
   en ouvrant le brouillon n°2 dans Outlook. Graph : `from` et `sender` **vides** sur le brouillon,
@@ -538,12 +538,12 @@ Preuves et scripts : `documentation/qa/m365-recette/`.
     le propriétaire. Aucun envoi.
 - **Envoi réel unique (9/10, 11:11 UTC, autorisé par le propriétaire)** depuis le banc, par le
   chemin du CRM (`sendAuthorizedDraft`) et l'application envoi ; `MAIL_SEND_ALLOWLIST` =
-  youssouphadiop@hotmail.fr ; garde : un seul `POST /send`, pour le seul brouillon créé dans
+  l’adresse de recette du propriétaire ; garde : un seul `POST /send`, pour le seul brouillon créé dans
   l'exécution, refus si une tentative existe déjà. Brouillon n°4 « [RECETTE 5sursync] Envoi de
   test unique – 09/10/2026 11:11 (heure de Dakar, UTC) » (signature 1, logo 1) : **« accepted »
   (202)**, 1 appel d'envoi. Vérification lecture seule (`verifyDraft`, 11:11:13) : état
   **in_sent**, 1 élément dans les Éléments envoyés de contact@, `isDraft` faux, `from` et
-  `sender` = contact@5sursync.com, destinataire youssouphadiop@hotmail.fr, envoyé 11:11:05 UTC.
+  `sender` = contact@5sursync.com, destinataire l’adresse de recette du propriétaire, envoyé 11:11:05 UTC.
   **Non livré** : rapport de non-remise reçu dans contact@ à 11:11:07 UTC, `550 5.7.708 Service
   unavailable. Access denied, traffic not accepted from this IP … AS(7230)` (statut Failed confirmé
   par Charlie dans le suivi Exchange ; locataire alors en essai gratuit). 202 et présence dans les

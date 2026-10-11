@@ -5,10 +5,12 @@ const messageId=`<smtp-test-${randomUUID()}@5sursync.com>`;
 let transport:ReturnType<typeof contactSMTPTransport>|undefined,attempts=0;
 try{
  transport=contactSMTPTransport();attempts=1;
- const info=await transport.sendMail({to:'youssouphadiop@hotmail.fr',from:'no-reply@5sursync.com',
+ // Destinataire de recette : TEST_RECIPIENT, sinon l'adresse de recette du domaine.
+ const recipient=(process.env.TEST_RECIPIENT||'recette@5sursync.com').toLowerCase();
+ const info=await transport.sendMail({to:recipient,from:'no-reply@5sursync.com',
   subject:'5/Sync IT — test SMTP de mise en service',
   text:`Test SMTP de mise en service 5/Sync IT.\nDate UTC : ${new Date().toISOString()}\nCe message de contrôle ne contient aucune demande client.`,messageId});
- if(!info.accepted.map(x=>x.toLowerCase()).includes('youssouphadiop@hotmail.fr'))throw new Error('Test recipient not accepted');
+ if(!info.accepted.map(x=>x.toLowerCase()).includes(recipient))throw new Error('Test recipient not accepted');
  console.log(JSON.stringify({status:'smtp-accepted',messageId:info.messageId,acceptedCount:1,deliveryConfirmed:false}));
 }catch(error){
  const e=error as {code?:unknown;responseCode?:unknown};

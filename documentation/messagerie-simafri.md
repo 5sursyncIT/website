@@ -1,7 +1,7 @@
 # Messagerie du CRM via Simafri (SMTP + IMAP) — contact@crm.5sursync.com
 
 **Mise à jour 9 octobre 2026, 14:55 UTC : EN PRODUCTION** (image `mail-simafri-20261009b`,
-migrations appliquées, contrôle sans envoi OK, envoi limité à youssouphadiop@hotmail.fr ;
+migrations appliquées, contrôle sans envoi OK, envoi limité à l’adresse de recette du propriétaire ;
 détails dans ETAT.md). Texte d'origine ci-dessous.
 
 **Statut au 9 octobre 2026** : code et tests isolés terminés (banc jetable, aucun envoi
@@ -48,7 +48,7 @@ Variables (production) :
 | `MAIL_ENABLED` | `true` |
 | `MAIL_PROVIDER` | `imap` (`graph` ou absent = Microsoft, conservé pour le retour arrière) |
 | `MAIL_PASSWORD_FILE` | `/run/secrets/crm_mail_password` |
-| `MAIL_SEND_ALLOWLIST` | absent = envoi fermé ; `youssouphadiop@hotmail.fr` pour la recette ; `*` = ouvert |
+| `MAIL_SEND_ALLOWLIST` | absent = envoi fermé ; `l’adresse de recette du propriétaire` pour la recette ; `*` = ouvert |
 | `MAIL_SYNC_SINCE_DAYS` | facultatif, 90 par défaut (reprise initiale) |
 | `MAIL_IMAP_DRAFTS_PATH`, `MAIL_IMAP_SENT_PATH` | seulement si le serveur n'annonce pas les attributs SPECIAL-USE (voir §6) |
 
@@ -254,7 +254,7 @@ Hotmail malgré SPF / DKIM / DMARC / compauth « pass »).
          MAIL_ENABLED: 'true'
          MAIL_PROVIDER: imap
          MAIL_PASSWORD_FILE: /run/secrets/crm_mail_password
-         MAIL_SEND_ALLOWLIST: youssouphadiop@hotmail.fr
+         MAIL_SEND_ALLOWLIST: recette@5sursync.com
        secrets: [database_uri, payload_secret, smtp_password, crm_mail_password]
    secrets:
      crm_mail_password:
@@ -266,7 +266,7 @@ Hotmail malgré SPF / DKIM / DMARC / compauth « pass »).
 
 ### Recette réelle proposée (feu vert séparé, un seul envoi)
 
-Liste de recette = `youssouphadiop@hotmail.fr` uniquement. Un brouillon « [RECETTE 5sursync]
+Liste de recette = `l’adresse de recette du propriétaire` uniquement. Un brouillon « [RECETTE 5sursync]
 Envoi Simafri – date » préparé dans le CRM (signature, logo, une petite pièce jointe), contrôlé
 dans le webmail, puis **un seul envoi** confirmé dans le CRM par le propriétaire. Vérifications :
 état « Accepté, copie dans Envoyés », une seule copie dans Envoyés, en-têtes reçus chez Hotmail
