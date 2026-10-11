@@ -267,8 +267,16 @@ captures `limits-accueil.png`, `limits-fiche.png`, `limits-rapports.png`,
    environnements sont bien distincts ; leurs contenus sont identiques simplement parce que
    les mêmes quatre médias y ont été déposés le 8 octobre.
 5. **Aucun cron de sauvegarde** n'a été installé — aucune automatisation sans demande.
-6. **Gagné / Perdu** restent des zones de dépôt et des listes séparées, pas des colonnes
-   persistantes du tableau. Signalé par l'audit, non modifié : à trancher.
+6. **Gagné / Perdu : tranché le 11 octobre 2026 — on garde les zones de dépôt.**
+   L'audit relevait qu'ils sont affichés comme zones de dépôt et listes séparées plutôt que
+   comme colonnes persistantes du tableau, et demandait une décision explicite. Décision du
+   propriétaire : le tableau de suivi sert à savoir quoi faire aujourd'hui, il ne montre donc
+   que les entreprises en cours. Des colonnes Gagné / Perdu grossiraient sans fin et
+   occuperaient de la place pour des affaires qui ne demandent plus aucune action. Le bilan
+   des gains, des pertes et de leurs raisons se lit sur `/crm/rapports`, et la liste complète
+   reste à un clic depuis l'en-tête du tableau. **Aucun changement de code** : le comportement
+   actuel est celui retenu, désormais documenté comme tel dans
+   `src/app/(crm)/crm/suivi/page.tsx`.
 7. **Dolibarr** reste l'ERP par l'organisation d'usage ; aucun connecteur n'a été écrit ni
    inventé.
 

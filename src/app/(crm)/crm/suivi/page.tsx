@@ -127,6 +127,14 @@ export default async function FollowUpBoard({ searchParams }: { searchParams: Se
             );
           })}
         </div>
+        {/* Gagné et Perdu sont des zones de dépôt, pas des colonnes du tableau.
+            Choix du propriétaire, 11 octobre 2026, après la question soulevée par
+            l'audit des six améliorations : ce tableau sert à savoir quoi faire
+            aujourd'hui, donc il ne montre que les entreprises en cours. Des colonnes
+            Gagné / Perdu grossiraient sans fin et occuperaient de la place pour des
+            affaires qui ne demandent plus aucune action. Le bilan des gains, des
+            pertes et de leurs raisons se lit sur /crm/rapports ; la liste complète
+            est à un clic (« Gagnées » / « Perdues » en haut de cette page). */}
         <div className="crm-dropzones">
           <div className="crm-dropzone crm-dropzone--won" data-stage="won">Déposer ici : Gagné</div>
           <div className="crm-dropzone crm-dropzone--lost" data-stage="lost">Déposer ici : Perdu</div>
