@@ -24,13 +24,13 @@ import {
 } from "@/collections";
 import { requiredSecret, secret } from "@/lib/env";
 import path from "node:path";
-import { disabledEmail } from "@/lib/email";
+import { emailAdapter } from "@/lib/email";
 export default buildConfig({
   secret:
     process.env.BUILD_MODE === "1"
       ? "build-only-not-for-runtime-not-a-secret"
       : requiredSecret("PAYLOAD_SECRET"),
-  email: disabledEmail,
+  email: emailAdapter(),
   admin: {
     user: "admins",
     importMap: { baseDir: path.resolve("src") },

@@ -1,6 +1,6 @@
 services:
   app-production:
-    image: 5sursync:audit-besoins-20261010
+    image: 5sursync:reset-mdp-20261013
     build:
       context: .
       args:

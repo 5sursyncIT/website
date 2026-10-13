@@ -91,6 +91,34 @@ export const Admins: CollectionConfig = {
     tokenExpiration: 3600,
     maxLoginAttempts: 5,
     lockTime: 900000,
+    // Mot de passe oublié : seul moyen de reprendre la main sur un compte, puisque la
+    // création d'un second administrateur est refusée tant qu'il en existe un.
+    // L'e-mail ne part qu'en production (voir emailAdapter dans lib/email.ts) ; ailleurs
+    // la demande échoue au lieu d'écrire un jeton dans les journaux.
+    forgotPassword: {
+      // Un même compte ne peut être visé plus d'une fois toutes les 5 minutes, même si
+      // quelqu'un connaît l'adresse. Nginx limite en plus par adresse IP.
+      minRequestInterval: 300000,
+      generateEmailSubject: () => "Réinitialisation de votre mot de passe — administration 5/Sync IT",
+      generateEmailHTML: ({ token } = {}) => {
+        const lien = `${process.env.APP_ORIGIN}/admin/reset/${token ?? ""}`;
+        return `<!doctype html><html lang="fr"><body style="margin:0;background:#f4f7fa;font-family:Arial,Helvetica,sans-serif;color:#092234">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 16px"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:1px solid #dfe7f0;border-top:3px solid #2ee9d8">
+<tr><td style="padding:28px 28px 8px">
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#4a6482">5/Sync IT</p>
+<h1 style="margin:0 0 16px;font-size:22px;line-height:1.25">Réinitialisation de votre mot de passe</h1>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.5">Une réinitialisation du mot de passe de l’administration a été demandée pour cette adresse. Choisissez un nouveau mot de passe en suivant ce lien :</p>
+<p style="margin:0 0 20px"><a href="${lien}" style="display:inline-block;background:#2ee9d8;color:#032034;text-decoration:none;font-weight:600;font-size:16px;padding:14px 22px">Choisir un nouveau mot de passe</a></p>
+<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#4a6482">Ce lien est à usage unique et expire après une heure. Votre nouveau mot de passe doit contenir au moins 14 caractères.</p>
+<p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#4a6482">Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : votre mot de passe actuel reste valable et n’a pas été modifié.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:#7f93aa;word-break:break-all">Si le bouton ne fonctionne pas, copiez cette adresse dans votre navigateur :<br>${lien}</p>
+</td></tr>
+<tr><td style="padding:16px 28px 24px;border-top:1px solid #eef3f7">
+<p style="margin:0;font-size:12px;color:#7f93aa">Message automatique envoyé par l’administration de 5sursync.com. Merci de ne pas y répondre.</p>
+</td></tr></table></td></tr></table></body></html>`;
+      },
+    },
     cookies: {
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",

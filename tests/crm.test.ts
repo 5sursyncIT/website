@@ -293,3 +293,58 @@ test("les besoins ne s'importent pas depuis un fichier CSV", async () => {
   assert.ok(!("needs" in fieldLabels) && !("needsDetail" in fieldLabels));
   assert.ok("name" in fieldLabels && "notes" in fieldLabels);
 });
+test("mot de passe oublié : l'e-mail ne part qu'en production approuvée", async () => {
+  const { emailAdapter, disabledEmail } = await import("../src/lib/email");
+  const env = { ...process.env };
+  const essai = (vars: Record<string, string | undefined>) => {
+    Object.assign(process.env, { SMTP_ENABLED: undefined, SMTP_USER: undefined, APP_ORIGIN: undefined, ...vars });
+    const choisi = emailAdapter();
+    return choisi === disabledEmail ? "desactive" : "actif";
+  };
+  const production = { SMTP_ENABLED: "true", SMTP_USER: "no-reply@5sursync.com", APP_ORIGIN: "https://5sursync.com" };
+  assert.equal(essai(production), "actif");
+  // Préproduction, bancs de test et développement n'envoient jamais rien : une demande
+  // de réinitialisation y échoue au lieu d'écrire un jeton dans les journaux.
+  assert.equal(essai({ ...production, APP_ORIGIN: "https://preprod.5sursync.com" }), "desactive");
+  assert.equal(essai({ ...production, APP_ORIGIN: "http://localhost:3000" }), "desactive");
+  assert.equal(essai({ ...production, SMTP_ENABLED: "false" }), "desactive");
+  assert.equal(essai({ ...production, SMTP_USER: "autre@5sursync.com" }), "desactive");
+  assert.equal(essai({}), "desactive");
+  process.env = env;
+});
+test("mot de passe oublié : contenu du message et lien de réinitialisation", async () => {
+  const { Admins } = await import("../src/collections/index");
+  const origine = process.env.APP_ORIGIN;
+  process.env.APP_ORIGIN = "https://5sursync.com";
+  const oubli = (Admins.auth as { forgotPassword: { generateEmailHTML: (a: { token: string }) => string | Promise<string>; generateEmailSubject: () => string | Promise<string> } }).forgotPassword;
+  const jeton = "jeton-de-test-0123456789abcdef";
+  const html = await oubli.generateEmailHTML({ token: jeton });
+  const sujet = await oubli.generateEmailSubject();
+  // Le lien doit viser la production et porter le jeton, sinon le message est inutile.
+  assert.ok(html.includes(`https://5sursync.com/admin/reset/${jeton}`), "lien de réinitialisation absent");
+  assert.match(sujet, /Réinitialisation/);
+  // Ce que la personne doit savoir : usage unique, durée, longueur exigée, et quoi faire
+  // si elle n'a rien demandé.
+  assert.match(html, /usage unique/i);
+  assert.match(html, /14 caractères/);
+  assert.match(html, /ignorez ce message/i);
+  assert.ok(html.startsWith("<!doctype html>"));
+  // Aucune donnée de compte ne doit circuler dans le message.
+  assert.ok(!/mot de passe actuel\s*:/i.test(html) && !html.includes("hash"));
+  process.env.APP_ORIGIN = origine;
+});
+test("version texte du message : lisible et lien conservé", async () => {
+  const { textFromHTML } = await import("../src/lib/email");
+  const texte = textFromHTML(
+    '<html><head><style>p{color:red}</style></head><body><h1>Titre</h1>' +
+    '<p>Bonjour&nbsp;: suivez <a href="https://5sursync.com/admin/reset/abc">ce lien</a>.</p>' +
+    "<p>Fin &amp; voilà</p></body></html>",
+  );
+  // Les styles disparaissent, les entités reviennent, le texte reste lisible.
+  assert.ok(!texte.includes("color:red") && !texte.includes("<"));
+  assert.match(texte, /Titre/);
+  assert.match(texte, /Bonjour : suivez ce lien\./);
+  assert.match(texte, /Fin & voilà/);
+  // Pas de mur de lignes vides.
+  assert.ok(!/\n{3,}/.test(texte));
+});
